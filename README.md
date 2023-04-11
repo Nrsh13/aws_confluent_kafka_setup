@@ -7,7 +7,7 @@ This project builds N EC2 instances for Kafka Cluster
 - Update aws_kafka_infra_setup/scripts/set_env.sh with your AWS Account Details.
 - Generate SSH Keys for EC2 Keypair -
 ```
-$ sh setup-ssh-keys.sh
+$ sh prereq-setup.sh
 
 INFO: Generate SSH Keys for ansible password less SSH
 
