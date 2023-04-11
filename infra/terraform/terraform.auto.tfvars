@@ -23,11 +23,12 @@ extra_policy_arns = [
     "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
     "arn:aws:iam::aws:policy/AdministratorAccess"
 ]
+iam_role_permissions_boundary = "" #"arn:aws:iam::428706479336:policy/ANY-Account-Policy"
 
 # EC2
 ami = "ami-0808460885ff81045"
 instance_type = "t3.large" #t3.2xlarge
-instance_count = 3
+instance_count = 1
 passwordless_ssh_user = "ansible"
 hostname_domain = ".nrsh13-hadoop.com" # generated hostname will be like - ansi-lab01-01.nrsh13-hadoop.com
 keypair_public_key = <<-EOF

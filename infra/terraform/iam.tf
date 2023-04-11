@@ -54,6 +54,7 @@ data "aws_iam_policy_document" "iam_base_policy" {
 resource "aws_iam_role" "this" {
   name                 = "${var.environment}-${var.instance}-${var.component}EC2Role"
   description          = "${var.environment}-${var.instance}-${var.component}EC2Role"
+  permissions_boundary = "${var.iam_role_permissions_boundary}"
   assume_role_policy   = <<EOF
 {
     "Version": "2012-10-17",

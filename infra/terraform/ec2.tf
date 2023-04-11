@@ -41,6 +41,7 @@ resource "aws_instance" "my_ec2_instances" {
     inline = [
       "set -x",
       # "sudo -s bash -c \"hostnamectl set-hostname ${var.component}-${var.instance}-0${count.index + 1}${var.hostname_domain}\"",
+      "sleep 120", #wait for 2 mins and then check userdata status using cloud-init
       "cloud-init status --wait"
     ]
   }
