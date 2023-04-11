@@ -29,30 +29,35 @@ resource "aws_instance" "my_ec2_instances" {
     ignore_changes = [ami]
   }
 
-  # provisioner "local-exec" {
-  #   command = "echo ${self.private_ip} >> /c/Windows/System32/drivers/etc/hosts"
-  # }
+  # To get Private IP - Hostname details for /etc/hosts
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo ${self.public_ip}  ${var.component}-${var.instance}-0${count.index + 1}${var.hostname_domain}  ${var.component}-${var.instance}-0${count.index + 1} >> ../../scripts/etchosts_forWindows
+      echo ${self.private_ip}  ${var.component}-${var.instance}-0${count.index + 1}${var.hostname_domain}  ${var.component}-${var.instance}-0${count.index + 1} >> ../../scripts/etchosts_forBastion
+    EOT
+  }
 
-  # connection {
-  #   type     = "ssh"
-  #   user     = "ansible"
-  #   private_key = "${file("../../scripts/ansible")}"
-  #   host     = "${self.public_ip}"
-  # }
+  # To set EC2 hostname and Cloud Init completion status
+  connection {
+    type     = "ssh"
+    user     = "ansible"
+    private_key = "${file("../../scripts/ansible.pem")}"
+    host     = "${self.public_ip}"
+  }
 
-  # provisioner "remote-exec" {
-  #   inline = [
-  #     #"set -x",
-  #     #"sudo -s bash -c \"echo ${aws_instance.my_ec2_instances[count.index].private_ip} > /root/testing.txt\"",
-  #     "cloud-init status --wait"
-  #   ]
-  # }
+  provisioner "remote-exec" {
+    inline = [
+      "set -x",
+      "sudo -s bash -c \"hostnamectl set-hostname ${var.component}-${var.instance}-0${count.index + 1}${var.hostname_domain}\"",
+      "cloud-init status --wait"
+    ]
+  }
 }
 
 ###### Output ######
-output "Instance_ID" {
-  description = "List of IDs of instances"
-  value = aws_instance.my_ec2_instances.*.id
+output "ETC_HOSTS_DETAILS" {
+  description = "Details for /etc/hosts"
+  value = "Update Bastion Ec2 /etc/hosts with scripts/etchosts_forBastion file content and /c/Windows/System32/drivers/etc/hosts with scripts/etchosts_forWindows file content"
 }
 
 output "Private_IP" {
@@ -60,7 +65,7 @@ output "Private_IP" {
   value = aws_instance.my_ec2_instances.*.private_ip
 }
 
-output "Public_IP" {
-  description = "List of Public IP addresses assigned to the instances"
-  value = aws_instance.my_ec2_instances.*.public_ip
-}
+# output "Public_IP" {
+#   description = "List of Public IP addresses assigned to the instances"
+#   value = aws_instance.my_ec2_instances.*.public_ip
+# }

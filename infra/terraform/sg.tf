@@ -42,8 +42,3 @@ resource "aws_security_group" "ec2_server_sg" {
   }
 
 }
-
-###### Output ######
-output "EC2_SG_Name" {
-  value = "${aws_security_group.ec2_server_sg.name}"
-}

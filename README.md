@@ -8,13 +8,13 @@ This project builds N EC2 instances for Kafka Cluster
 - Generate SSH Keys for EC2 Keypair -
 ```
 cd aws_kafka_infra_setup/scripts
-ssh-keygen -b 2048 -t rsa -f ansible -q -C ansible -N ""
+ssh-keygen -b 2048 -t rsa -f ansible.pem -q -C ansible -N ""
 nrsh13@dell-laptop MINGW64 ~/Desktop/aws_kafka_infra_setup/scripts
 $ ll
 total 13K
 -rwxr-xr-x 1 nrsh13 197121  926 Apr  9 12:15 setup_env.sh
--rw-r--r-- 1 nrsh13 197121  561 Apr 11 04:52 ansible.pub
--rw-r--r-- 1 nrsh13 197121 2.6K Apr 11 04:52 ansible
+-rw-r--r-- 1 nrsh13 197121  561 Apr 11 04:52 ansible.pem.pub
+-rw-r--r-- 1 nrsh13 197121 2.6K Apr 11 04:52 ansible.pem
 -rw-r--r-- 1 nrsh13 197121 3.8K Apr 11 05:33 provision.sh
 ```
 - Update aws_kafka_infra_setup/infra/terraform/terraform.auto.tfvars with required variables (including generated ansible.pub in previous step). This also has instance_count to decide how many Ec2 you want to deploy.

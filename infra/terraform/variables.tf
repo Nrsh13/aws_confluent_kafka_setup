@@ -64,6 +64,10 @@ variable "instance_count" {
   default = "1"
 }
 
+variable "hostname_domain" {
+  description = "Hostname Domain. for eq. testhost.<HOSTDOMAIN.COM> ansi-lab01-01.nrsh13-hadoop.com"
+  default = ".nrsh13-hadoop.com"
+}
 
 # IAM Role
 variable "create" {
