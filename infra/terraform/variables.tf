@@ -30,11 +30,6 @@ variable "component" {
   type = string
 }
 
-variable "config_repo_name" {
-  description = "(Required) Configuration Repo Name. E.g. rst_sftp_infra_config"
-  type = string
-}
-
 variable "common_tags" {
   description = "Tags common to the component"
   type = map

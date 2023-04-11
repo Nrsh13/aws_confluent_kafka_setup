@@ -19,4 +19,4 @@ nohup.out
 # .tfvars files are managed as part of configuration and so should be included in
 # version control.
 #
-infra/terraform/terraform.auto.tfvars
+#infra/terraform/terraform.auto.tfvars
