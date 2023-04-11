@@ -19,9 +19,9 @@ INFO: Update teraform.auto.tfvars with ansible user Public Key
 
 INFO: Ansible user SSH Keys are ansible.pem and ansible.pem.pub. Will be used for SSH like below
 
-INFO: ssh ansible@PUBLIC_IP_OF_EC2_INSTANCE
+INFO: ssh -q -o "StrictHostKeyChecking=no" ansible@PUBLIC_IP_OF_EC2_INSTANCE
 ```
-- Update aws_kafka_infra_setup/infra/terraform/terraform.auto.tfvars with required variables. keypair_public_key variable is already updated with ansible.pem.pu in previous step.
+- Update aws_kafka_infra_setup/infra/terraform/terraform.auto.tfvars with required variables. keypair_public_key variable is already updated with ansible.pem.pub in previous step.
 
 ## How to Run 
 ```
@@ -38,14 +38,11 @@ terraform login
 sh remote_provision.sh plan|apply|destroy
 ```
 
-## Post Set up - On All EC2s
-- Update Bastion Ec2 /etc/hosts with aws_kafka_infra_setup/scripts/etchosts_forBastion file content and /c/Windows/System32/drivers/etc/hosts with aws_kafka_infra_setup/scripts/etchosts_forWindows file content.
+## Post Set up
+- /c/Windows/System32/drivers/etc/hosts and /etc/hosts (on All EC2s) are updated with IP details using null_resource in ec2.tf (refer aws_kafka_infra_setup/etchostsBastion and aws_kafka_infra_setup/scripts/etchostsWindows ). This will allow direct SSH to any EC2 from Local -> 
+- Update Any Bastion Ec2 (if using) /etc/hosts with aws_kafka_infra_setup/scripts/etchostsBastion file content
 ```
-ssh -i "ansible.pem" ec2-user@ec2-54-206-93-240.ap-southeast-2.compute.amazonaws.com
-sudo su -
-vi /etc/hosts and add similar to below from aws_kafka_infra_setup/scripts/etchosts_forBastion.
-172.31.15.39	ansi-lab01-01.nrsh13-hadoop.com	ansi-lab01-01
-172.31.15.40	ansi-lab01-01.nrsh13-hadoop.com	ansi-lab01-01
+ssh -q -o "StrictHostKeyChecking=no" ansible@ansi-lab01-02.nrsh13-hadoop.com
 ```
 
 ## Contact

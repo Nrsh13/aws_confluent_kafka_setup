@@ -26,10 +26,10 @@ extra_policy_arns = [
 
 # EC2
 ami = "ami-0808460885ff81045"
-instance_type = "t3.2xlarge"
+instance_type = "t3.large" #t3.2xlarge
 instance_count = 3
 passwordless_ssh_user = "ansible"
-hostname_domain = ".nrsh13-hadoop.com"
+hostname_domain = ".nrsh13-hadoop.com" # generated hostname will be like - ansi-lab01-01.nrsh13-hadoop.com
 keypair_public_key = <<-EOF
 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCdauexfShE2i8NpID934ORmfjcoGXhorOpgiPX6Mh1BXlBXM11iq5utvRzv3MBSNqrQxYQC7A0TL/qfwnZCqUfuU1rB8ce5o7NUCsyMvNe6MOla5AmcbKyMWrH8rxQJ5GF1EqlonQZ0PABxGM040X/QWl2RBAKUR/vBD643xjAcutpRSxF0vVKkZeBL2ZbXobGRSh0KWrc/OdRnFlKBWuCA6ZJv+VvI590xaFWTtKZEREDUBLDPHjBgL53ysCd/Am4aHstDpl80A6YbTM330YoQpLtTPaUs0jH17V4HmrPQvOYgnSxwJyKovwlXxfWFrVy1mpOeui3Earv83o1ooBB ansible
 EOF

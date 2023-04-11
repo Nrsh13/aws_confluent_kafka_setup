@@ -29,15 +29,7 @@ resource "aws_instance" "my_ec2_instances" {
     ignore_changes = [ami]
   }
 
-  # To get Private IP - Hostname details for /etc/hosts
-  provisioner "local-exec" {
-    command = <<-EOT
-      echo ${self.public_ip}  ${var.component}-${var.instance}-0${count.index + 1}${var.hostname_domain}  ${var.component}-${var.instance}-0${count.index + 1} >> ../../scripts/etchosts_forWindows
-      echo ${self.private_ip}  ${var.component}-${var.instance}-0${count.index + 1}${var.hostname_domain}  ${var.component}-${var.instance}-0${count.index + 1} >> ../../scripts/etchosts_forBastion
-    EOT
-  }
-
-  # To set EC2 hostname and Cloud Init completion status
+  # To set EC2 hostname, /etc/hosts and Cloud Init completion status
   connection {
     type     = "ssh"
     user     = "ansible"
@@ -48,10 +40,32 @@ resource "aws_instance" "my_ec2_instances" {
   provisioner "remote-exec" {
     inline = [
       "set -x",
-      "sudo -s bash -c \"hostnamectl set-hostname ${var.component}-${var.instance}-0${count.index + 1}${var.hostname_domain}\"",
+      # "sudo -s bash -c \"hostnamectl set-hostname ${var.component}-${var.instance}-0${count.index + 1}${var.hostname_domain}\"",
       "cloud-init status --wait"
     ]
   }
+}
+
+# To set up ssh to all Ec2s from Local
+resource "null_resource" "ansible" {
+  depends_on = [
+    aws_instance.my_ec2_instances
+  ]
+
+  triggers = {
+    key = "${uuid()}"
+  }
+
+  provisioner "local-exec" {
+    #  interpreter = ["PowerShell", "-Command"]
+    interpreter = [
+      "bash" , "-c"
+    ]
+    command = <<-EOT
+      sh ../../scripts/post-setup.sh ${var.component} ${var.instance}  ${var.instance_count} ${var.hostname_domain} ${var.passwordless_ssh_user}
+    EOT
+  }
+
 }
 
 ###### Output ######
