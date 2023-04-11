@@ -31,7 +31,7 @@ cd aws_kafka_infra_setup/scripts
 sh provision.sh -h
 sh provision.sh --instance lab01 --action apply
 
-# Remove Backend (Terraform Cloud)
+# Remote Backend (Terraform Cloud)
 - Update aws_kafka_infra_setup/infra/terraform/main.tf.remote with your Org details
 - Uncomment instance variable value in aws_kafka_infra_setup/infra/terraform/terraform.auto.tfvars
 terraform login
