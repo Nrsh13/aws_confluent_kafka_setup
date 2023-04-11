@@ -29,17 +29,24 @@ resource "aws_instance" "my_ec2_instances" {
     ignore_changes = [ami]
   }
 
-  provisioner "local-exec" {
-    command = "echo ${self.private_ip}"
-  }
+  # provisioner "local-exec" {
+  #   command = "echo ${self.private_ip} >> /c/Windows/System32/drivers/etc/hosts"
+  # }
 
-  # Provisioners - file and remote-exec are used together. Could not use them as SSH with Keypair useage is blocked in ddd.
-  #provisioner "file|remote-exec" {
-  #   connection {
-  #    detials
-  #  }
-  #}
+  # connection {
+  #   type     = "ssh"
+  #   user     = "ansible"
+  #   private_key = "${file("../../scripts/ansible")}"
+  #   host     = "${self.public_ip}"
+  # }
 
+  # provisioner "remote-exec" {
+  #   inline = [
+  #     #"set -x",
+  #     #"sudo -s bash -c \"echo ${aws_instance.my_ec2_instances[count.index].private_ip} > /root/testing.txt\"",
+  #     "cloud-init status --wait"
+  #   ]
+  # }
 }
 
 ###### Output ######
