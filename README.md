@@ -7,17 +7,21 @@ This project builds N EC2 instances for Kafka Cluster
 - Update aws_kafka_infra_setup/scripts/set_env.sh with your AWS Account Details.
 - Generate SSH Keys for EC2 Keypair -
 ```
-cd aws_kafka_infra_setup/scripts
-ssh-keygen -b 2048 -t rsa -f ansible.pem -q -C ansible -N ""
-nrsh13@dell-laptop MINGW64 ~/Desktop/aws_kafka_infra_setup/scripts
-$ ll
-total 13K
--rwxr-xr-x 1 nrsh13 197121  926 Apr  9 12:15 setup_env.sh
--rw-r--r-- 1 nrsh13 197121  561 Apr 11 04:52 ansible.pem.pub
--rw-r--r-- 1 nrsh13 197121 2.6K Apr 11 04:52 ansible.pem
--rw-r--r-- 1 nrsh13 197121 3.8K Apr 11 05:33 provision.sh
+$ sh setup-ssh-keys.sh
+
+INFO: Generate SSH Keys for ansible password less SSH
+
+INFO: Copy SSH Keys to ~/.ssh/ - To Allow SSH to EC2 from local
+
+INFO: Copy SSH Keys to /root/.ssh - To Allow SSH to EC2 from Bastion
+
+INFO: Update teraform.auto.tfvars with ansible user Public Key
+
+INFO: Ansible user SSH Keys are ansible.pem and ansible.pem.pub. Will be used for SSH like below
+
+INFO: ssh ansible@PUBLIC_IP_OF_EC2_INSTANCE
 ```
-- Update aws_kafka_infra_setup/infra/terraform/terraform.auto.tfvars with required variables (including generated ansible.pub in previous step). This also has instance_count to decide how many Ec2 you want to deploy.
+- Update aws_kafka_infra_setup/infra/terraform/terraform.auto.tfvars with required variables. keypair_public_key variable is already updated with ansible.pem.pu in previous step.
 
 ## How to Run 
 ```
@@ -35,15 +39,13 @@ sh remote_provision.sh plan|apply|destroy
 ```
 
 ## Post Set up - On All EC2s
-- Use EC2 Private IP to update /etc/hosts and set hostname on the EC2 instnaces.
+- Update Bastion Ec2 /etc/hosts with aws_kafka_infra_setup/scripts/etchosts_forBastion file content and /c/Windows/System32/drivers/etc/hosts with aws_kafka_infra_setup/scripts/etchosts_forWindows file content.
 ```
 ssh -i "ansible.pem" ec2-user@ec2-54-206-93-240.ap-southeast-2.compute.amazonaws.com
 sudo su -
-vi /etc/hosts and add similar to below.
+vi /etc/hosts and add similar to below from aws_kafka_infra_setup/scripts/etchosts_forBastion.
 172.31.15.39	ansi-lab01-01.nrsh13-hadoop.com	ansi-lab01-01
 172.31.15.40	ansi-lab01-01.nrsh13-hadoop.com	ansi-lab01-01
-
-hostnamectl set-hostname ansi-lab01-01.nrsh13-hadoop.com
 ```
 
 ## Contact
