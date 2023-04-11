@@ -5,7 +5,6 @@ SECONDS=0
 # Print the Usage
 usage="
 Usage:
-    . ./common/setup_env.sh
     sh $0 --instance dev01|test01 --action apply|plan|destroy
 "
 
@@ -65,6 +64,8 @@ common_var_file="-var-file=\"${THIS_SCRIPT_DIR}/../infra/terraform/terraform.aut
 # Initialise Terraform
 pushd $scripts_dir/../infra/terraform > /dev/null
 #echo -e "\n# Terraform INIT comand: \n\n terraform init ${common_var_file} ${instance_var_file} -backend-config="region=${aws_region}" -backend-config="bucket=${terraform_state_bucket}" -backend-config="key=terraform.tfstate" -input=false\n"
+
+cp main.tf.s3 main.tf
 
 echo -e "\n\$------ Running Terraform init ------\$"
 export TF_IN_AUTOMATION=true # To Remove init output last parahgraph

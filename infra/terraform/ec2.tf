@@ -14,7 +14,7 @@ resource "aws_instance" "my_ec2_instances" {
   iam_instance_profile = "${var.environment}-${var.instance}-${var.component}EC2RoleInstanceProfile"
   tags = merge(var.common_tags,var.specific_tags, {"Name"="${var.component}-${var.instance}-0${count.index + 1}"})
   #subnet_id = element(sort(data.aws_subnet_ids.subnet_ids.ids), 0)
-  subnet_id = element(sort(data.aws_subnet_ids.subnet_ids.ids), "${count.index + 1}")
+  subnet_id = element(sort(data.aws_subnets.subnet_ids.ids), "${count.index + 1}")
   vpc_security_group_ids = ["${aws_security_group.ec2_server_sg.id}"]
   key_name  = aws_key_pair.ec2-key.key_name
   user_data = "${data.template_file.ec2_userdata.rendered}"

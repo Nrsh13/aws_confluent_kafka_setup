@@ -17,13 +17,21 @@ total 13K
 -rw-r--r-- 1 nrsh13 197121 2.6K Apr 11 04:52 ansible
 -rw-r--r-- 1 nrsh13 197121 3.8K Apr 11 05:33 provision.sh
 ```
-- Update aws_kafka_infra_setup/infra/terraform/terraform.auto.tfvars with required variables (including generated ansible.pub in previous step)
+- Update aws_kafka_infra_setup/infra/terraform/terraform.auto.tfvars with required variables (including generated ansible.pub in previous step). This also has instance_count to decide how many Ec2 you want to deploy.
 
 ## How to Run 
 ```
 cd aws_kafka_infra_setup/scripts
+
+# S3 Backend
 sh provision.sh -h
 sh provision.sh --instance lab01 --action apply
+
+# Remove Backend (Terraform Cloud)
+- Update aws_kafka_infra_setup/infra/terraform/main.tf.remote with your Org details
+- Uncomment instance variable value in aws_kafka_infra_setup/infra/terraform/terraform.auto.tfvars
+terraform login
+sh remote_provision.sh plan|apply|destroy
 ```
 
 ## Post Set up - On All EC2s

@@ -6,7 +6,7 @@ vpc_cidr = ["172.31.0.0/16"]
 
 # Envrionment Parameters
 environment = "nrsh13"
-instance = "lab01"
+#instance = "lab01" # Setting in provision.sh. Uncomment for remote_provision.sh
 component = "ansi"
 common_tags = {
   Environment = "nrsh13"

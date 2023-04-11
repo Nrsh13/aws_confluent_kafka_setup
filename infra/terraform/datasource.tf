@@ -1,6 +1,10 @@
 ##### Data Source #####
-data "aws_subnet_ids" "subnet_ids" {
-  vpc_id = "${var.vpc_id}"
+data "aws_subnets" "subnet_ids" {
+  #vpc_id = "${var.vpc_id}"
+  filter {
+    name   = "vpc-id"
+    values = [var.vpc_id]
+  }
 }
 
 # Render EC2 userdata
