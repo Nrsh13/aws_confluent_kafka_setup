@@ -10,6 +10,7 @@ infra/terraform/.terraform.lock.hcl
 **/*.tfstate.*/*
 **/*.terraform.lock.hcl*/*
 scripts/ansible*
+infra/terraform/errored.tfstate
 
 # Crash log files
 crash.log
