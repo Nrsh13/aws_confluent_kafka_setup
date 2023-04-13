@@ -1,0 +1,55 @@
+---
+# tasks file for roles/zookeeper
+
+############## ZK Configuration
+
+- name: Check ZK Status
+  command: service confluent-zookeeper status
+  register: zk_status
+  ignore_errors: true
+  changed_when: false
+  failed_when: false # To void Failed ZK Status on Console
+  args:
+    warn: no
+
+- name: Set Zookeeper Properties
+  template: 
+    src: templates/zookeeper.configuration.j2 
+    dest: "{{ zookeeper.zk_application_path }}/zookeeper.properties"
+    force: yes
+    mode: 0640
+    owner: "{{zookeeper_user}}"
+    group: "{{zookeeper_group}}"
+  register: file_change_status_1
+
+- name: Set Zookeeper myid
+  template: 
+    src: templates/zookeeper.myid.j2
+    dest: "{{ zookeeper.configuration.data_dir }}/myid" 
+    force: yes
+    mode: 0640
+    owner: "{{zookeeper_user}}"
+    group: "{{zookeeper_group}}"
+  register: file_change_status_2
+
+- name: Set Zookeeper log4j Config
+  template:
+    src: zookeeper_log4j.properties.j2
+    dest: "{{zookeeper.log4j_file}}"
+    mode: 0640
+    owner: "{{zookeeper_user}}"
+    group: "{{zookeeper_group}}"
+  register: file_change_status_3
+
+################ Start ZK Service
+
+- name: Restart ZK
+  service:  name=confluent-zookeeper state=restarted enabled=yes
+  when:
+    - file_change_status_1.changed == true or file_change_status_2.changed == true or file_change_status_3.changed == true
+    - zk_status.rc == 0
+
+- name: Start ZK
+  service:  name=confluent-zookeeper state=started enabled=yes
+  when:
+    - zk_status.rc != 0

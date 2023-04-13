@@ -1,0 +1,9 @@
+- name: Restart KConnect Service
+  systemd:
+    daemon_reload: true
+    name: "confluent-kafka-connect"
+    state: restarted
+
+- name: KConnect Health Check
+  include_tasks: health_check_KConnect.yml
+

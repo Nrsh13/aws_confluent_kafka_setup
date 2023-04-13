@@ -1,0 +1,8 @@
+- name: Restart Control Center Service
+  systemd:
+    daemon_reload: true
+    name: "confluent-control-center"
+    state: restarted
+
+- name: Kafka Rest Health Check
+  include_tasks: health_check_CCenter.yml

@@ -1,0 +1,13 @@
+# Maintained by Ansible
+bootstrap.servers={{ ansible_fqdn }}:9092
+client.confluent.monitoring.interceptor.security.protocol=PLAINTEXT
+client.security.protocol=PLAINTEXT
+confluent.license.topic=_confluent-license
+confluent.monitoring.interceptor.bootstrap.servers={{ ansible_fqdn }}:9092
+confluent.monitoring.interceptor.topic=_confluent-monitoring
+consumer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor
+host.name={{ ansible_fqdn }}
+id=1
+listeners=http://0.0.0.0:8082
+producer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor
+schema.registry.url=http://{{ ansible_fqdn }}:8081

@@ -1,0 +1,85 @@
+# ALL Variables in this file will flow from default/main.yml
+---
+- name: Gather OS Facts
+  setup:
+    gather_subset:
+      - '!all'
+      - '!any'
+      - user
+      #- os_family
+  tags: always
+
+- name: Host Validations
+  include_tasks: host_validations.yml
+  when: validate_hosts|bool
+  tags: validate
+
+- name: Add Confluent Dist Yum Repo
+  yum_repository:
+    name: Confluent.dist
+    file: confluent
+    description: "Confluent repository (dist)"
+    baseurl: "{{confluent_common_repository_redhat_dist_baseurl}}"
+    gpgcheck: "{{confluent_common_repository_redhat_dist_gpgcheck}}"
+    gpgkey: "{{confluent_common_repository_redhat_dist_gpgkey}}"
+    enabled: "{{confluent_common_repository_redhat_dist_enabled}}"
+  register: confluent_dist_repo_result
+
+- name: Add Confluent Yum Repo
+  yum_repository:
+    name: Confluent
+    file: confluent
+    description: "Confluent repository"
+    baseurl: "{{confluent_common_repository_redhat_main_baseurl}}"
+    gpgcheck: "{{confluent_common_repository_redhat_main_gpgcheck}}"
+    gpgkey: "{{confluent_common_repository_redhat_main_gpgkey}}"
+    enabled: "{{confluent_common_repository_redhat_main_enabled}}"
+  register: confluent_repo_result
+
+# Not using handler because of https://github.com/ansible/ansible/issues/41313
+- name: yum-clean-all
+  command: yum clean all
+  args:
+    warn: false
+  when: confluent_dist_repo_result.changed|default(False) or confluent_repo_result.changed|default(False) or custom_repo_result.changed|default(False)
+
+- name: Install Java
+  yum:
+    name: "{{redhat_java_package_name}}"
+    state: present
+  register: java_install_result
+  until: java_install_result is success
+  retries: 2
+  delay: 5
+  when: install_java|bool
+  tags: package
+
+- name: Install OpenSSL and Unzip
+  yum:
+    name:
+      - openssl
+      - unzip
+      - wget
+      - curl
+      - python3-dev*
+      - gcc*
+  tags: package
+
+#- name: Install confluent-kafka Modules
+#  shell: python3 -m pip install confluent-kafka confluent-kafka[avro] requests
+#  changed_when: false
+
+#- name: Run yum-complete-transaction
+#  shell: yum-complete-transaction --cleanup-only
+#  changed_when: false
+
+- name: Install the Kafka Packages
+  yum:
+    name: "{{ kafka_packages }}"
+    state: latest
+  #ignore_errors: "{{ ansible_check_mode }}"
+  tags: package
+  #notify: restart kafka
+
+- set_fact:
+    common_role_completed: true

@@ -1,0 +1,11 @@
+################### CLEAN UP
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Clean up Confluent-Kafka
+      shell: kill -9 $(ps -ef | grep confluent | grep -v grep | awk '{print $2}' ); rm -rf /var/log/kafka* /var/log/confluent* /var/log/schema* /var/log/ksql* /var/lib/zookeeper* /var/lib/kafka* /var/lib/confluent* /etc/kafka* /etc/zookeeper* /etc/schema* /etc/ksql* /etc/confluent* /tmp/lib/kafka* /tmp/*; yum erase -y confluent-*
+      #when: cleanup   # Pass as an argument to ansible-playbook command ->  -e cleanup=true
+      #ignore_errors: True
+      tags:
+        - cleanup

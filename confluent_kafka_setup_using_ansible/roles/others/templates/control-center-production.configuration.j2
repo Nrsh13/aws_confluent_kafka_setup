@@ -1,0 +1,16 @@
+# Written by Ansible
+bootstrap.servers={{ ansible_fqdn }}:9092
+confluent.controlcenter.command.topic.replication=1
+confluent.controlcenter.connect.connect-cluster.cluster=http://{{ ansible_fqdn }}:8083
+confluent.controlcenter.data.dir=/var/lib/confluent/control-center
+confluent.controlcenter.internal.topics.replication=1
+confluent.controlcenter.ksql.ksql.advertised.url=http://{{ ansible_fqdn }}:8088
+confluent.controlcenter.ksql.ksql.url=http://{{ ansible_fqdn }}:8088
+confluent.controlcenter.rest.listeners=http://0.0.0.0:9021
+confluent.controlcenter.schema.registry.url=http://{{ ansible_fqdn }}:8081
+confluent.controlcenter.streams.cprest.url=http://{{ ansible_fqdn }}:8090
+confluent.controlcenter.streams.num.stream.threads=8
+confluent.controlcenter.streams.security.protocol=PLAINTEXT
+confluent.metrics.topic.replication=1
+confluent.monitoring.interceptor.security.protocol=PLAINTEXT
+confluent.monitoring.interceptor.topic.replication=1

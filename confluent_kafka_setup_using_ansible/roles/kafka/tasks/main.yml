@@ -1,0 +1,70 @@
+---
+############## Kafka Server Configuration
+
+- name: Create Logs Directory
+  file:
+    path: "{{kafka_broker.configuration.logs_path}}"
+    state: directory
+    group: "{{kafka_broker_group}}"
+    owner: "{{kafka_broker_user}}"
+    mode: 0764
+
+- name: Set Permissions on /var/lib/kafka
+  file:
+    path: "{{ kafka_broker.configuration.data_dir }}"
+    owner: "{{kafka_broker_user}}"
+    group: "{{kafka_broker_group}}"
+    state: directory
+    mode: 0750
+
+- name: Set Permissions on Data Dirs
+  file:
+    path: "{{ kafka_broker.configuration.logs_dir }}"
+    owner: "{{kafka_broker_user}}"
+    group: "{{kafka_broker_group}}"
+    state: directory
+    mode: 0750
+
+- name: Create Kafka Broker Config directory
+  file:
+    path: "{{ kafka_broker.config_file | dirname }}"
+    state: directory
+    mode: 0750
+    owner: "{{kafka_broker_user}}"
+    group: "{{kafka_broker_group}}"
+
+- name: Check Kafka Status
+  command: service confluent-server status
+  register: kafka_status
+  args:
+    warn: no
+  ignore_errors: true
+  changed_when: false
+  failed_when: false # To void Failed Kafka Status on Console
+
+- name: Set Kafka Configuration
+  template: 
+    src: templates/kafka.configuration.j2 
+    dest: "{{ kafka_broker.kafka_application_path }}/server.properties"
+    force: yes
+    mode: 0640
+    owner: "{{kafka_broker_user}}"
+    group: "{{kafka_broker_group}}"
+  register: file_change_status
+
+
+################ Start Kafka Service
+
+- name: Restart Kafka
+  service:  name=confluent-server state=restarted enabled=yes
+  #notify: restart kafka
+  when: 
+    - file_change_status.changed == true 
+    - kafka_status.rc == 0
+
+- name: Start Kafka
+  service:  name=confluent-server state=started enabled=yes
+  #notify: start kafka
+  when: 
+    #- file_change_status.changed == true 
+    - kafka_status.rc != 0

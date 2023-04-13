@@ -1,0 +1,8 @@
+- name: Restart SR Service
+  systemd:
+    daemon_reload: true
+    name: "confluent-schema-registry"
+    state: restarted
+
+- name: SR Health Check
+  include_tasks: health_check_SR.yml

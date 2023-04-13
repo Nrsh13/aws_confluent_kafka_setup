@@ -1,0 +1,9 @@
+- name: Restart KSQL DB Service
+  systemd:
+    daemon_reload: true
+    name: "confluent-ksqldb"
+    state: restarted
+
+- name: KSql Health Check
+  include_tasks: health_check_KSql.yml
+

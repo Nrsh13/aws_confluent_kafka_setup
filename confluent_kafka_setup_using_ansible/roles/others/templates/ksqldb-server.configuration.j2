@@ -1,0 +1,17 @@
+application.id=ksql-server
+bootstrap.servers={{ ansible_fqdn }}:9092
+confluent.monitoring.interceptor.bootstrap.servers={{ ansible_fqdn }}:9092
+confluent.monitoring.interceptor.security.protocol=PLAINTEXT
+confluent.monitoring.interceptor.topic=_confluent-monitoring
+consumer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor
+ksql.internal.topic.replicas=1
+ksql.schema.registry.url=http://{{ ansible_fqdn }}:8081
+ksql.service.id=default_
+ksql.streams.num.standby.replicas=1
+ksql.streams.producer.delivery.timeout.ms=2147483647
+ksql.streams.producer.max.block.ms=9223372036854775807
+ksql.streams.replication.factor=1
+ksql.streams.state.dir=/var/lib/kafka-streams
+listeners=http://0.0.0.0:8088
+producer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor
+security.protocol=PLAINTEXT

@@ -1,0 +1,22 @@
+---
+# handlers file for roles/others
+
+############## Schema Registry
+
+- name: restart schema-registry
+  include_tasks: tasks/restart_SR.yml
+
+- name: restart ksqldb
+  include_tasks: tasks/restart_KSql.yml
+
+- name: restart connect-service
+  include_tasks: tasks/restart_KConnect.yml
+
+- name: restart rest-service
+  include_tasks: tasks/restart_KRest.yml
+
+- name: restart control-center
+  include_tasks: tasks/restart_KSql.yml
+
+
+

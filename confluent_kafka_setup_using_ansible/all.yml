@@ -1,0 +1,35 @@
+---
+- name: Hosts Prerequisites
+  hosts: all
+  become: true
+  gather_facts: false
+  #environment: "{{ proxy_env }}" # Commented as could not convert to INI format for ansible tower
+  roles:
+    - confluent.variables
+    - confluent.common
+
+- name: Zookeeper Provisioning
+  hosts: zk_servers
+  become: true
+  gather_facts: false
+  #environment: "{{ proxy_env }}"
+  # tags: validate and add later
+  roles:
+    - zookeeper
+
+- name: Kafka Provisioning
+  hosts: kafka_servers
+  become: true
+  gather_facts: false
+  #environment: "{{ proxy_env }}"
+  roles:
+    - kafka
+
+- name: Other Services Provisioning
+  hosts: other_servers
+  become: true
+  gather_facts: false
+  #environment: "{{ proxy_env }}"
+  roles:
+    - others
+

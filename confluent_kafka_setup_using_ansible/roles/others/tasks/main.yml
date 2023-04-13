@@ -1,0 +1,128 @@
+---
+# tasks file for roles/others
+
+############## Schema Registry
+# Installing with Defaults - schema_registry_user = cp-schema-registry, schema_registry_group = confluent, 
+# Logs - /var/log/confluent/schema-registry and log4j - /etc/schema-registry/log4j.properties
+
+- name: Set Schema Registry Configuration
+  template: 
+    src: templates/schema-registry.configuration.j2 
+    dest: /etc/schema-registry/schema-registry.properties 
+    force: yes
+  # Below goes to handler folder. HANDLER WILL ONLY EXECUTE IF THERE ARE CHANGES NOTIFICED BY ANSIBLE IN THIS STEP.
+  notify: restart schema-registry
+
+- name: Start Schema Registry Service
+  systemd:
+    name: "confluent-schema-registry"
+    enabled: true
+    state: started
+
+- name: SR Health Check
+  include_tasks: health_check_SR.yml
+
+############## KSQLDB
+
+- name: Set KSQL DB Log4j
+  template: src=templates/ksqldb-log4j.configuration.j2 dest=/etc/ksqldb/log4j.properties force=yes
+  # Below goes to handler folder. HANDLER WILL ONLY EXECUTE IF THERE ARE CHANGES NOTIFICED BY ANSIBLE IN THIS STEP.
+  notify: restart ksqldb
+
+- name: Set KSQL DB Configuration
+  template: 
+    src: templates/ksqldb-server.configuration.j2 
+    dest: /etc/ksqldb/ksql-server.properties 
+    force: yes
+  # Below goes to handler folder. HANDLER WILL ONLY EXECUTE IF THERE ARE CHANGES NOTIFICED BY ANSIBLE IN THIS STEP.
+  notify: restart ksqldb
+
+- name: Start Ksql Service
+  systemd:
+    name: "confluent-ksqldb"
+    enabled: true
+    state: started
+
+- name: KSql DB Health Check
+  include_tasks: health_check_KSql.yml
+
+############## Connect Distributed
+
+- name: Set Log Dir Permissions
+  shell: chmod 770 /var/log/kafka 
+  changed_when: false
+
+- name: Set Connect Log4j
+  template: 
+    src: "templates/connect-log4j.configuration.j2"
+    dest: "/etc/kafka/connect-log4j.properties"
+    force: yes
+    mode: 0640
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+  # Below goes to handler folder. HANDLER WILL ONLY EXECUTE IF THERE ARE CHANGES NOTIFICED BY ANSIBLE IN THIS STEP.
+  notify: restart connect-service
+
+- name: Set Connect Configuration
+  template: 
+    src: templates/connect-distributed.configuration.j2 
+    dest: /etc/kafka/connect-distributed.properties 
+    force: yes
+    mode: 0640
+    owner: "{{kafka_connect_user}}"
+    group: "{{kafka_connect_group}}"
+  # Below goes to handler folder. HANDLER WILL ONLY EXECUTE IF THERE ARE CHANGES NOTIFICED BY ANSIBLE IN THIS STEP.
+  notify: restart connect-service
+
+- name: Install Connect Plugins
+  include_tasks: connect_plugins.yml
+
+- name: Start Connect Service
+  systemd:
+    name: "confluent-kafka-connect"
+    enabled: true
+    state: started
+
+- name: Kafka Connect Health Check
+  include_tasks: health_check_KConnect.yml
+
+
+################# Kafka rest Configuration
+
+- name: Set Kafka Rest Configuration
+  template: src=templates/kafka-rest.configuration.j2 dest=/etc/kafka-rest/kafka-rest.properties force=yes
+  # Below goes to handler folder. HANDLER WILL ONLY EXECUTE IF THERE ARE CHANGES NOTIFICED BY ANSIBLE IN THIS STEP.
+  notify: restart rest-service
+
+- name: Start Kafka Rest Service
+  systemd:
+    name: "confluent-kafka-rest"
+    enabled: true
+    state: started
+
+- name: KRest Health Check
+  include_tasks: health_check_KRest.yml
+
+
+################# Control Center Production
+# Installing with Defaults - control_center_user = cp-control-center, control_center_group = confluent,
+# Logs - /var/log/confluent/control-center and log4j - /etc/confluent-control-center/log4j.properties
+# Data dir - /var/lib/confluent/control-center/
+
+- name: Set Control Center Production
+  template: 
+    src: templates/control-center-production.configuration.j2 
+    dest: /etc/confluent-control-center/control-center-production.properties
+    force: yes
+  # Below goes to handler folder. HANDLER WILL ONLY EXECUTE IF THERE ARE CHANGES NOTIFICED BY ANSIBLE IN THIS STEP.
+  notify: restart control-center
+
+- name: Start Control Center Service
+  systemd:
+    name: "confluent-control-center"
+    enabled: true
+    state: started
+
+- name: Contrl Center Health Check
+  include_tasks: health_check_CCenter.yml
+

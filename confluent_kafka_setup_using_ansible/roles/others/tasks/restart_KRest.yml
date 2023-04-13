@@ -1,0 +1,10 @@
+- name: Restart KRest Service
+  systemd:
+    daemon_reload: true
+    name: "confluent-kafka-rest"
+    state: restarted
+  #when: substate.stdout != 'SubState=running'
+
+- name: Kafka Rest Health Check
+  include_tasks: health_check_KRest.yml
+

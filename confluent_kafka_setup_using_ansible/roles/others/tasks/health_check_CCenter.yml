@@ -1,0 +1,17 @@
+---
+# Cannot use Block/Rescue in Ansible Handlers: https://github.com/ansible/ansible/issues/14270
+# Implementing try/catch logic with ignore_errors and conditionals
+- name: Control Center Health Check - Wait for webpage to serve content
+  uri:
+    url: "{{control_center_http_protocol}}://{{inventory_hostname}}:{{control_center_port}}"
+    validate_certs: false
+    # Basic auth header is redundant for non rbac install
+    #url_username: "{{control_center_health_check_user}}"
+    #url_password: "{{control_center_health_check_password}}"
+    #force_basic_auth: true
+  register: result1
+  until: result1.status == 200
+  retries: 10
+  delay: 10
+  when: not rbac_enabled|bool
+  ignore_errors: true

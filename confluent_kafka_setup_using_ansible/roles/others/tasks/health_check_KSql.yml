@@ -1,0 +1,18 @@
+---
+# Cannot use Block/Rescue in Ansible Handlers: https://github.com/ansible/ansible/issues/14270
+# Implementing try/catch logic with ignore_errors and conditionals
+- name: KSQL DB Heatlh Check - Wait for API to return 200
+  uri:
+    url: "{{ksql_http_protocol}}://{{inventory_hostname}}:{{ksql_listener_port}}/info"
+    status_code: 200
+    validate_certs: false
+    # Basic auth header is redundant for non rbac install
+    #url_username: "{{ksql_health_check_user}}"
+    #url_password: "{{ksql_health_check_password}}"
+    #force_basic_auth: true
+  register: result1
+  until: result1.status == 200
+  retries: 10
+  delay: 5
+  when: not ksql_ssl_mutual_auth_enabled|bool
+  ignore_errors: true
