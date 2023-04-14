@@ -4,7 +4,7 @@ This project Deploys a Confluent Kafka Cluster on N number of EC2s.
 
 ## Pre-requisites
 
-- Build required number of EC2 instances following aws_kafka_infra_setup/README.md
+- Build required number of EC2 instances following confluent_kafka_infra_setup/README.md
 - Validate password less ssh to all EC2s from Ansible Controller host (where you will run the ansible-playbook from)
 - Udpate hostsInventory.yml with your hostnames and test connectivity using ping module.
 

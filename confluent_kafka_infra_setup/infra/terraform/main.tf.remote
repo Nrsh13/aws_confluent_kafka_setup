@@ -8,7 +8,7 @@ terraform {
     organization = "NRSH13_AWS"
 
     workspaces {
-      name = "aws_kafka_infra_setup"
+      name = "aws_confluent_kafka_setup"
     }
   }
 }

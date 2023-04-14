@@ -6,7 +6,7 @@ This project contains a Confluent Kafka Python Producer and Consumer code. This 
 
 ## Pre-requisites
 
-- Build required number of EC2 instances following aws_kafka_infra_setup/README.md
+- Build required number of EC2 instances following confluent_kafka_infra_setup/README.md
 - Below packages are required which will already be installed. Install below if want to use this code somewhere else.
 ```
     yum install -y python39

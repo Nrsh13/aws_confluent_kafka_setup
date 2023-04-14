@@ -1,7 +1,7 @@
 # Confluent Kafka Setup Using Ansible on AWS
 
 ## Set up Infra/EC2s
-Refer aws_kafka_infra_setup/README.md
+Refer confluent_kafka_infra_setup/README.md
 
 ## Set up Nonsecure Confluent Kafka
 Refer confluent_kafka_setup_nonsecure/README.md
