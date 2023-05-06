@@ -37,7 +37,6 @@ Encryption successful
 
 ## How to Run 
 
-```
 - Copy inventory/dummyhostsInventory.yml to inventory/hostsInventory.yml and update as per your details.Once ready Test connectivity using ping module.
 
 ```
@@ -64,6 +63,7 @@ ansi-lab01-03.nrsh13-hadoop.com | SUCCESS => {
     "ping": "pong"
 }
 ```
+
 - Run ansible playbook - Either Pass Vault password from command line using --ask-vault-password or define the vault creds file location in ansible.cfg
 ```
 	ansible-playbook all.yml --ask-vault-pass

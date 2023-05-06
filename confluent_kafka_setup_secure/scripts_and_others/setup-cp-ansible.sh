@@ -15,7 +15,7 @@ playbook_usage="
 
     - With $scripts_dir/../roles/secrets: All certs/creds/passwords coming from $scripts_dir/../roles/secrets
 
-	Refer roles/secrets/defaults/DummySecret.yml and Create|Update roles/secrets/defaults/secret.yml
+	Refer roles/secrets/defaults/dummySecret.yml and Create|Update roles/secrets/defaults/secret.yml
 	Update Passwords, Host Cert, Private Key, Root CA, tokenKeypairDir/TokenKeyPair.pem and tokenKeypairDir/public.pem in roles/secrets/default/secret.yml
 
     - Without $scripts_dir/../roles/secrets: All certs/creds/passwords coming from inventory/hostsInventory.yml - Refer scripts_and_others/without_roles_secrets_settings.sh
