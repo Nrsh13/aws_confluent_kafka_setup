@@ -66,9 +66,9 @@ ansi-lab01-03.nrsh13-hadoop.com | SUCCESS => {
 
 - Run ansible playbook - Either Pass Vault password from command line using --ask-vault-password or define the vault creds file location in ansible.cfg
 ```
-	ansible-playbook all.yml --ask-vault-pass
-    or to run a specific component
-	ansible-playbook all.yml --tags kafka_brokers --ask-vault-pass
+ansible-playbook all.yml --ask-vault-pass
+or to run a specific component
+ansible-playbook all.yml --tags kafka_brokers --ask-vault-pass
 ```
 
 
@@ -96,7 +96,7 @@ ansible-playbook scripts_and_others/cleanup.yml
 Control Center:		https://ansi-lab01-01.nrsh13-hadoop.com:9021
 Connect Cluster: 	https://ansi-lab01-01.nrsh13-hadoop.com:18083
 Schema Registry: 	https://ansi-lab01-01.nrsh13-hadoop.com:18081
-KSql: 				https://ansi-lab01-01.nrsh13-hadoop.com:18088/info
+KSql:               https://ansi-lab01-01.nrsh13-hadoop.com:18088/info
 ```
 
 
