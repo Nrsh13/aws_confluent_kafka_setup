@@ -1,0 +1,186 @@
+---
+- name: Host Prerequisites
+  hosts: zookeeper:kafka_broker:schema_registry:kafka_connect:ksql:control_center:kafka_rest:kafka_connect_replicator
+  gather_facts: false
+  environment: "{{ proxy_env }}"
+  tasks:
+    - import_role:
+        name: variables
+    - name: Create Certificate Authority and Copy to Ansible Host
+      include_tasks: tasks/certificate_authority.yml
+      tags: certificate_authority
+      run_once: true
+      when: >
+        create_mds_certs|bool or
+        (self_signed|bool and
+        (zookeeper_ssl_enabled|bool or
+        kafka_broker_listeners | ssl_required(ssl_enabled) or
+        kafka_broker_rest_ssl_enabled|bool or
+        schema_registry_ssl_enabled|bool or
+        kafka_rest_ssl_enabled|bool or
+        kafka_connect_ssl_enabled|bool or
+        ksql_ssl_enabled|bool or
+        control_center_ssl_enabled|bool))
+
+    - import_role:
+        name: common
+      tags: common
+
+
+- name: Zookeeper Provisioning
+  hosts: zookeeper
+  gather_facts: false
+  tags: zookeeper
+  environment: "{{ proxy_env }}"
+  # We are not using group_vars so that the same code can be used with Ansible Tower. with group_vars, all secrets will be displayed in plain text in Ansible variable section.
+  pre_tasks:
+    - name: include_secrets_role
+      include_vars: "roles/secrets/defaults/secret.yml"
+      tags: ["always"]
+  tasks:
+    - import_role:
+        name: variables
+    - import_role:
+        name: zookeeper
+
+
+- name: Kafka Broker Provisioning
+  hosts: kafka_broker
+  gather_facts: false
+  tags: kafka_broker
+  environment: "{{ proxy_env }}"
+  pre_tasks:
+    - name: include_secrets_role
+      include_vars: "roles/secrets/defaults/secret.yml"
+      tags: ["always"]
+  tasks:
+    - import_role:
+        name: variables
+    - import_role:
+        name: kafka_broker
+
+
+- name: Schema Registry Provisioning
+  hosts: schema_registry
+  serial: 1
+  any_errors_fatal: true
+  gather_facts: false
+  tags: schema_registry
+  environment: "{{ proxy_env }}"
+  pre_tasks:
+    - name: include_secrets_role
+      include_vars: "roles/secrets/defaults/secret.yml"
+      tags: ["always"]
+  tasks:
+    - import_role:
+        name: schema_registry
+
+    - name: Proceed Prompt
+      pause:
+        prompt: "Press Enter to Proceed to Next Node. Ctrl + C to Abort"
+      when: schema_registry_pause_rolling_deployment|bool
+
+
+- name: Kafka Connect Provisioning
+  hosts: kafka_connect
+  gather_facts: false
+  tags: kafka_connect
+  environment: "{{ proxy_env }}"
+  pre_tasks:
+    - name: include_secrets_role
+      include_vars: "roles/secrets/defaults/secret.yml"
+      tags: ["always"]
+  tasks:
+    - import_role:
+        name: variables
+    - import_role:
+        name: kafka_connect
+
+
+- name: Control Center Provisioning
+  hosts: control_center
+  gather_facts: false
+  tags: control_center
+  environment: "{{ proxy_env }}"
+  pre_tasks:
+    - name: include_secrets_role
+      include_vars: "roles/secrets/defaults/secret.yml"
+      tags: ["always"]
+  tasks:
+    - import_role:
+        name: variables
+    - import_role:
+        name: control_center
+
+
+- name: KSQL Provisioning
+  hosts: ksql
+  gather_facts: false
+  tags: ksql
+  environment: "{{ proxy_env }}"
+  pre_tasks:
+    - name: include_secrets_role
+      include_vars: "roles/secrets/defaults/secret.yml"
+      tags: ["always"]
+  tasks:
+    - import_role:
+        name: variables
+    - import_role:
+        name: ksql
+
+
+- name: Kafka Rest Provisioning
+  hosts: kafka_rest
+  gather_facts: false
+  tags: kafka_rest
+  environment: "{{ proxy_env }}"
+  pre_tasks:
+    - name: include_secrets_role
+      include_vars: "roles/secrets/defaults/secret.yml"
+      tags: ["always"]
+  tasks:
+    - import_role:
+        name: variables
+    - import_role:
+        name: kafka_rest
+
+
+- name: Kafka Connect Replicator Provisioning
+  hosts: kafka_connect_replicator
+  gather_facts: false
+  tags: kafka_connect_replicator
+  environment: "{{ proxy_env }}"
+  pre_tasks:
+    - name: include_secrets_role
+      include_vars: "roles/secrets/defaults/secret.yml"
+      tags: ["always"]
+  tasks:
+    - import_role:
+        name: variables
+    - import_role:
+        name: kafka_connect_replicator
+
+
+- name: Post setup Permissions
+  hosts: set_permissions
+  become: true
+  tags: set_permissions
+  #vars:
+  #  mds_super_user_password: "{{ mds_super_user_password }}"
+  pre_tasks:
+    - name: include_secrets_role
+      include_vars: "roles/secrets/defaults/secret.yml"
+      tags: ["always"]
+  tasks:
+     - name: Transfer the script
+       copy:
+        src: scripts_and_others/setup-initial-permissions.sh
+        dest: /tmp/setup-initial-permissions.sh
+        mode: 0777
+
+     - name: Execute the script
+       # "{{X}}" -> Variable from all.yml and {{X}} (without quotes) - Secret from vault. Below is the usage example for both.
+       command: sh /tmp/setup-initial-permissions.sh "{{mds_super_user}}" {{mds_super_user_password}} "{{inventory_hostname}}" "{{user_need_access_to_mytopic}}" "{{kafka_connect_group_id}}"
+       #when:
+       # inventory_hostname == 'ansi-lab01-01.nrsh13-hadoop.com'
+

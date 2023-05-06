@@ -13,6 +13,8 @@ This project contains a Confluent Kafka Python Producer and Consumer code. This 
     python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema
 ```
 - For Secure Kafka Cluster, Make sure security details are updated (location of the certs). NO CHANGES NEED IF USING ANY OF THE KAFKA BROKER TO USE THIS CODE.
+
+Read secure_cluster_settings_for_using_Producer_Consumer.md for more requirements. 
 ```
     # Security
     security_protocol = 'SSL'

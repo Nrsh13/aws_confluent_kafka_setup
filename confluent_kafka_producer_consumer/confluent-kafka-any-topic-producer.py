@@ -71,16 +71,19 @@ def delivery_report(err, msg):
 def get_schema(SCHEMA_REGISTRY_URL,topic):
         try:
                 subject = topic + '-value'
-                url="{}/subjects/{}/versions".format(SCHEMA_REGISTRY_URL, subject),
+                url="{}/subjects/{}/versions".format(SCHEMA_REGISTRY_URL, subject)
                 headers = { 'Content-Type': 'application/vnd.schemaregistry.v1+json',}
+                cert = (ssl_certificate_location,ssl_key_location) # Make sure Cert is mentioned before Key
 
                 # Get Latest Version
                 print ("\nINFO: Making the API Call to SR")
+
+                #For SSLError -> https://levelup.gitconnected.com/solve-the-dreadful-certificate-issues-in-python-requests-module-2020d922c72f
                 versions_response = requests.get(
-                        url="{}/subjects/{}/versions".format(SCHEMA_REGISTRY_URL, subject),
-                        headers={
-                                "Content-Type": "application/vnd.schemaregistry.v1+json",
-                        }, verify=ssl_ca_location
+                        url=url,
+                        headers=headers,
+                        cert=cert, # SSLV3_ALERT_BAD_CERTIFICATE
+                        verify=ssl_ca_location # CERTIFICATE_VERIFY_FAILED - unable to get local issuer certificate
                 )
 
                 latest_version = versions_response.json()[-1]
@@ -88,9 +91,9 @@ def get_schema(SCHEMA_REGISTRY_URL,topic):
                 # Get Value Schema
                 schema_response = requests.get(
                         url="{}/subjects/{}/versions/{}".format(SCHEMA_REGISTRY_URL, subject, latest_version),
-                        headers={
-                                "Content-Type": "application/vnd.schemaregistry.v1+json",
-                        }, verify=ssl_ca_location
+                        headers=headers,
+                        cert=cert, # SSLV3_ALERT_BAD_CERTIFICATE
+                        verify=ssl_ca_location # CERTIFICATE_VERIFY_FAILED - unable to get local issuer certificate
                 )
 
                 value_schema = schema_response.json()
@@ -337,7 +340,7 @@ if __name__ == '__main__':
 
         if secure_cluster is True:
             kafkaBrokerPort = 9093
-            zookeeperPort = 2182
+            zookeeperPort = 2181
             schemaRegistryPort = 18081
             SCHEMA_REGISTRY_URL = 'https://'+schemaRegistryServer+':'+str(schemaRegistryPort)
         else:
@@ -353,7 +356,7 @@ if __name__ == '__main__':
         security_protocol = 'SSL'
         ssl_ca_location = "/var/ssl/private/ca.crt"  # Root Cert
         ssl_key_location = '/var/ssl/private/kafka_broker.key' # Priavte Key
-        ssl_certificate_location = '/var/ssl/private/kafka_broker.crt' # Response Cert
+        ssl_certificate_location = '/var/ssl/private/kafka_broker.crt' # Response Cert - kafka-connect-lab01.nrsh13-hadoop.com
         # Update Details End
 
         print ("""\nINFO: Kakfa Connection Details:
@@ -401,6 +404,7 @@ if __name__ == '__main__':
             avro_serializer = serialize_schema(schema_registry_conf, schema_str, producer_serializer_type)
         elif ( producer_serializer_type == 'json' ):
             print ("\nINFO: Get %s Schema for Topic %s" %(producer_serializer_type, topic))
+            print(SCHEMA_REGISTRY_URL)
             schema_str = get_schema(SCHEMA_REGISTRY_URL,topic)
             print ("\nINFO: Set up %s Schema for Topic %s" %(producer_serializer_type, topic))
             json_serializer = serialize_schema(schema_registry_conf, schema_str, producer_serializer_type)
@@ -421,4 +425,3 @@ if __name__ == '__main__':
             producer = Producer(producer_conf)
 
         produce_messages(producer,int(num_mesg),topic, producer_serializer_type)
-

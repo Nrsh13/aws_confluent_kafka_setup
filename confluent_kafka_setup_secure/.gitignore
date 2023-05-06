@@ -1,0 +1,5 @@
+inventory/hostsInventory.yml*
+troubleshooting/
+scripts_and_others/tokenKeypairDir
+scripts_and_others/secrets_role/secrets/defaults/secret.yml
+roles/secrets/defaults/secret.yml
