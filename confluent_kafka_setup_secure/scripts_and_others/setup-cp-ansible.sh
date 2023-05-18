@@ -113,6 +113,9 @@ sed -i -e 's/src: "{{ssl_signed_cert_filepath}}"/content: "{{ssl_signed_cert_fil
 sed -i -e 's/src: "{{ssl_key_filepath}}"/content: "{{ssl_key_filecontent}}"/' roles/ssl/tasks/custom_certs.yml
 sed -e '/remote_src: "{{ssl_custom_certs_remote_src}}"/ s/^#*/#/' -i roles/ssl/tasks/custom_certs.yml
 
+# remove config_validation when we are not using /var/ssl/private folder for certs location.
+sed -i -e '/- name: Config Validations/,+5d' roles/common/tasks/main.yml
+
 echo -e "\nINFO: Copy roles and Filter Plugins to root folder and remove cp-ansible "
 cp $scripts_dir/cp-ansible/plugins/filter/filters.py $scripts_dir/../filter_plugins/
 rm -rf $scripts_dir/../roles

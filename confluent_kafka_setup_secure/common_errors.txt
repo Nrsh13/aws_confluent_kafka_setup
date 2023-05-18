@@ -111,3 +111,18 @@ org.apache.kafka.common.KafkaException: Failed to start license store with topic
         at kafka.Kafka$.main(Kafka.scala:108)
         at kafka.Kafka.main(Kafka.scala)
 
+
+##7. If /var/ssl/private folder is NOT used for certs (meaning we are using key/certs from secrets_role), config_validations check should be removed/commented from/in roles/common/tasks/main.yml
+
+#- name: Config Validations
+#  include_tasks: config_validations.yml
+#  when: validate_hosts|bool
+#  tags:
+#    - validate
+
+Else Kafka Broker will fail to start with NullPointer Exception.
+
+ERROR [KafkaServer id-2] Fatal error during KafkaServer startup. Prepare to shutdown (kafka.server.KafkaServer)
+java.lang.NullPointerException
+  at io.confluent.kafka.server.plugins.auth.token.TokenBearerValidatorCallbackHandler.close(TokenBearerValidatorCallbackHandler.java:101)
+  at org.apache.kafka.common.network.SaslChannelBuilder.close(SaslChannelBuilder.java:266)
