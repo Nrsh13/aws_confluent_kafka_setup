@@ -15,7 +15,7 @@ playbook_usage="
 
     - With $scripts_dir/../roles/secrets: All certs/creds/passwords coming from $scripts_dir/../roles/secrets
 
-	Refer roles/secrets/defaults/dummySecret.yml and Create|Update roles/secrets/defaults/secret.yml
+	Refer roles/secrets/defaults/DummySecret.yml and Create|Update roles/secrets/defaults/secret.yml
 	Update Passwords, Host Cert, Private Key, Root CA, tokenKeypairDir/TokenKeyPair.pem and tokenKeypairDir/public.pem in roles/secrets/default/secret.yml
 
     - Without $scripts_dir/../roles/secrets: All certs/creds/passwords coming from inventory/hostsInventory.yml - Refer scripts_and_others/without_roles_secrets_settings.sh
@@ -113,8 +113,12 @@ sed -i -e 's/src: "{{ssl_signed_cert_filepath}}"/content: "{{ssl_signed_cert_fil
 sed -i -e 's/src: "{{ssl_key_filepath}}"/content: "{{ssl_key_filecontent}}"/' roles/ssl/tasks/custom_certs.yml
 sed -e '/remote_src: "{{ssl_custom_certs_remote_src}}"/ s/^#*/#/' -i roles/ssl/tasks/custom_certs.yml
 
-# remove config_validation when we are not using /var/ssl/private folder for certs location.
+# remove config_validation as we are NOT using /var/ssl/private folder for Certs location.
+# kafka broker null pointer error - MDS not starting.
+echo -e "\nINFO: Remove MDS Public pem and Token Key location depedency on controller - roles/kafka_broker/tasks/rbac.yml"
 sed -i -e '/- name: Config Validations/,+5d' roles/common/tasks/main.yml
+sed -i -e  '/broker_public_pem_file/d' roles/kafka_broker/tasks/rbac.yml
+sed -i -e  '/broker_private_pem_file/d' roles/kafka_broker/tasks/rbac.yml
 
 echo -e "\nINFO: Copy roles and Filter Plugins to root folder and remove cp-ansible "
 cp $scripts_dir/cp-ansible/plugins/filter/filters.py $scripts_dir/../filter_plugins/

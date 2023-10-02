@@ -33,9 +33,9 @@ all:
     ssl_custom_certs: true
     ssl_custom_certs_remote_src: false 
     # Ignore below when using variables from roles/secrets/default/secret.yml
-    ssl_ca_cert_filepath: "/var/ssl/private/root/root.crt"    
-    ssl_signed_cert_filepath: "/var/ssl/private/{{inventory_hostname}}/certificate.crt"
-    ssl_key_filepath: "/var/ssl/private/{{inventory_hostname}}/private.key"
+    #ssl_ca_cert_filepath: "/var/ssl/private/root/root.crt"    
+    #ssl_signed_cert_filepath: "/var/ssl/private/{{inventory_hostname}}/certificate.crt"
+    #ssl_key_filepath: "/var/ssl/private/{{inventory_hostname}}/private.key"
 
     ## By default, the playbook will recreate them keystores and truststores on each run
     ## To prevent this, uncomment this line:
@@ -58,7 +58,7 @@ all:
         password: my-secret	
 
     #mTLS - SSL/TLS setup is pre-requisite
-    ssl_mutual_auth_enabled: true
+    ssl_mutual_auth_enabled: false
 
     ## Zookeeper Authentication - Zk to ZK authentication and ZK to Clients(kafka) authentication
     zookeeper_sasl_protocol: digest
@@ -104,8 +104,8 @@ all:
     # Provide your own MDS server certificates and key pair for OAuth
     create_mds_certs: false
     # Ignore below 2 locations when using variables from roles/secrets
-    token_services_public_pem_file: /var/ssl/private/public.pem # Path to public.pem
-    token_services_private_pem_file: /var/ssl/private/tokenKeypair.pem # Path to tokenKeypair.pem
+    #token_services_public_pem_file: /var/ssl/private/public.pem # Path to public.pem
+    #token_services_private_pem_file: /var/ssl/private/tokenKeypair.pem # Path to tokenKeypair.pem
     mds_acls_enabled: false #to turn off mds based acls, they are on by default if rbac is on
     mds_ssl_mutual_auth_enabled: true #Enable mutual authentication for RBAC to work with TLS
 
@@ -128,14 +128,14 @@ all:
         name: BROKER
         port: 9092
         ssl_enabled: true # Server Presents its certificate
-        ssl_mutual_auth_enabled: true #Mutual Auth - mTLS - Server and Client both presents their certs to each other.
+        ssl_mutual_auth_enabled: false #Mutual Auth - mTLS - Server and Client both presents their certs to each other.
         sasl_protocol: scram
       # For Components connectivity with Brokers
       internal:
         name: INTERNAL
         port: 9091
         ssl_enabled: true
-        ssl_mutual_auth_enabled: true
+        ssl_mutual_auth_enabled: false
         sasl_protocol: OAUTH # With scram - failed authentication due to: Client SASL mechanism 'SCRAM-SHA-512' not enabled in the server, enabled mechanisms are [OAUTHBEARER]
       # For Clients
       client_listener_ssl:
