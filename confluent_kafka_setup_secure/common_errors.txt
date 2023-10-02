@@ -10,7 +10,7 @@ for eq.
 
 TASK [zookeeper : Set Zookeeper Data Dir Ownership] **********************************************************************************************
 Saturday 15 April 2023  19:10:49 +1200 (0:00:00.083)       0:02:55.585 ********
-fatal: [ansi-lab01-01.bnznag.nz.thenational.com]: FAILED! => {"msg": "An unhandled exception occurred while templating '{{ zookeeper_combined_properties | combine(zookeeper_custom_properties) }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{{ zookeeper_properties | confluent.platform.combine_properties }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: template error while templating string: Could not load \"confluent.platform.combine_properties\": 'Invalid plugin FQCN (confluent.platform.combine_properties): unable to locate collection confluent.platform'. String: {{ zookeeper_properties | confluent.platform.combine_properties }}. Could not load \"confluent.platform.combine_properties\": 'Invalid plugin FQCN (confluent.platform.combine_properties): unable to locate collection confluent.platform'"}
+fatal: [ansi-lab01-01.nrsh13-hadoop.com]: FAILED! => {"msg": "An unhandled exception occurred while templating '{{ zookeeper_combined_properties | combine(zookeeper_custom_properties) }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: An unhandled exception occurred while templating '{{ zookeeper_properties | confluent.platform.combine_properties }}'. Error was a <class 'ansible.errors.AnsibleError'>, original message: template error while templating string: Could not load \"confluent.platform.combine_properties\": 'Invalid plugin FQCN (confluent.platform.combine_properties): unable to locate collection confluent.platform'. String: {{ zookeeper_properties | confluent.platform.combine_properties }}. Could not load \"confluent.platform.combine_properties\": 'Invalid plugin FQCN (confluent.platform.combine_properties): unable to locate collection confluent.platform'"}
 
 So configuring collection is required -
 
@@ -38,7 +38,7 @@ interpreter_python=/usr/bin/python3.9
 
 TASK [common : Upgrade pip] **********************************************************************************************************************
 Saturday 15 April 2023  19:01:04 +1200 (0:00:03.954)       0:01:02.390 ********
-fatal: [ansi-lab01-01.bnznag.nz.thenational.com]: FAILED! => {"changed": false, "cmd": ["/usr/libexec/platform-python", "-m", "pip.__main__", "install", "--upgrade", "pip"], "msg": "stdout: Collecting pip\n  Downloading https://nexus.sharedservices.aws.nz.thenational.com/repository/pypi/packages/pip/23.0.1/pip-23.0.1-py3-none-any.whl (2.1MB)\n\n:stderr: WARNING: Running pip install with root privileges is generally not a good idea. Try `__main__.py install --user` instead.\npip requires Python '>=3.7' but the running Python is 3.6.8\n"}
+fatal: [ansi-lab01-01.nrsh13-hadoop.com]: FAILED! => {"changed": false, "cmd": ["/usr/libexec/platform-python", "-m", "pip.__main__", "install", "--upgrade", "pip"], "msg": "stdout: Collecting pip\n  Downloading https://nexus.sharedservices.aws.nz.thenational.com/repository/pypi/packages/pip/23.0.1/pip-23.0.1-py3-none-any.whl (2.1MB)\n\n:stderr: WARNING: Running pip install with root privileges is generally not a good idea. Try `__main__.py install --user` instead.\npip requires Python '>=3.7' but the running Python is 3.6.8\n"}
 
 
 ##3. Authentication/RBAC/MDS setup error -
@@ -47,8 +47,8 @@ fatal: [ansi-lab01-01.bnznag.nz.thenational.com]: FAILED! => {"changed": false, 
 
 TASK [kafka_broker : Grant role System Admin to Additional Kafka Broker System Admins] ***********************************************************
 Monday 17 April 2023  06:21:11 +1200 (0:00:01.600)       0:04:25.906 **********
-FAILED - RETRYING: [ansi-lab01-01.bnznag.nz.thenational.com]: Grant role System Admin to Additional Kafka Broker System Admins (30 retries left).
-FAILED - RETRYING: [ansi-lab01-02.bnznag.nz.thenational.com]: Grant role System Admin to Additional Kafka Broker System Admins (30 retries left).
+FAILED - RETRYING: [ansi-lab01-01.nrsh13-hadoop.com]: Grant role System Admin to Additional Kafka Broker System Admins (30 retries left).
+FAILED - RETRYING: [ansi-lab01-02.nrsh13-hadoop.com]: Grant role System Admin to Additional Kafka Broker System Admins (30 retries left).
 F
 
 Kafka logs shows below - meaning the mTLS is being used for Authentication while MDS should be with LDAP settings. Make sure kafka_broker_custom_listeners along with LDAP details is configured in the inventory file.  
@@ -61,27 +61,27 @@ Kafka logs shows below - meaning the mTLS is being used for Authentication while
 
 TASK [kafka_broker : Wait for Embedded Rest Proxy to start] **************************************************************************************
 Monday 17 April 2023  06:52:24 +1200 (0:00:00.233)       0:04:19.480 **********
-FAILED - RETRYING: [ansi-lab01-02.bnznag.nz.thenational.com]: Wait for Embedded Rest Proxy to start (25 retries left).
-FAILED - RETRYING: [ansi-lab01-03.bnznag.nz.thenational.com]: Wait for Embedded Rest Proxy to start (25 retries left).
-.fatal: [ansi-lab01-02.bnznag.nz.thenational.com]: FAILED! => {"attempts": 25, "changed": false, "connection": "close", "content": "{\"error_code\":40101,\"message\":\"Client SASL mechanism 'SCRAM-SHA-512' not enabled in the server, enabled mechanisms are [OAUTHBEARER]\"}", "content_type": "application/json", "date": "Sun, 16 Apr 2023 19:23:09 GMT", "elapsed": 0, "json": {"error_code": 40101, "message": "Client SASL mechanism 'SCRAM-SHA-512' not enabled in the server, enabled mechanisms are [OAUTHBEARER]"}, "msg": "Status code was 401 and not [200]: HTTP Error 401: Unauthorized", "redirected": false, "status": 401, "url": "https://ansi-lab01-02.bnznag.nz.thenational.com:8090/kafka/v3/clusters"}
+FAILED - RETRYING: [ansi-lab01-02.nrsh13-hadoop.com]: Wait for Embedded Rest Proxy to start (25 retries left).
+FAILED - RETRYING: [ansi-lab01-03.nrsh13-hadoop.com]: Wait for Embedded Rest Proxy to start (25 retries left).
+.fatal: [ansi-lab01-02.nrsh13-hadoop.com]: FAILED! => {"attempts": 25, "changed": false, "connection": "close", "content": "{\"error_code\":40101,\"message\":\"Client SASL mechanism 'SCRAM-SHA-512' not enabled in the server, enabled mechanisms are [OAUTHBEARER]\"}", "content_type": "application/json", "date": "Sun, 16 Apr 2023 19:23:09 GMT", "elapsed": 0, "json": {"error_code": 40101, "message": "Client SASL mechanism 'SCRAM-SHA-512' not enabled in the server, enabled mechanisms are [OAUTHBEARER]"}, "msg": "Status code was 401 and not [200]: HTTP Error 401: Unauthorized", "redirected": false, "status": 401, "url": "https://ansi-lab01-02.nrsh13-hadoop.com:8090/kafka/v3/clusters"}
 
 
 Kafka sever logs - 
 
-[2023-04-17 06:53:14,252] ERROR [AdminClient clientId=adminclient-2] Connection to node -3 (ansi-lab01-03.bnznag.nz.thenational.com/10.86.113.148:9091) failed authentication due to: Client SASL mechanism 'SCRAM-SHA-512' not enabled in the server, enabled mechanisms are [OAUTHBEARER] (org.apache.kafka.clients.NetworkClient)
+[2023-04-17 06:53:14,252] ERROR [AdminClient clientId=adminclient-2] Connection to node -3 (ansi-lab01-03.nrsh13-hadoop.com/10.86.113.148:9091) failed authentication due to: Client SASL mechanism 'SCRAM-SHA-512' not enabled in the server, enabled mechanisms are [OAUTHBEARER] (org.apache.kafka.clients.NetworkClient)
 [2023-04-17 06:53:14,252] WARN [AdminClient clientId=adminclient-2] Metadata update failed due to authentication error (org.apache.kafka.clients.admin.internals.AdminMetadataManager)
 org.apache.kafka.common.errors.UnsupportedSaslMechanismException: Client SASL mechanism 'SCRAM-SHA-512' not enabled in the server, enabled mechanisms are [OAUTHBEARER]
 
 ##5. When Certifictes used for Producer/Consumer are NOT correct
 
 - when /var/ssl/private/kafka_broker.crt and /var/ssl/private/kafka_broker.key is NOT mentioned properly.
-- curl https://ansi-lab01-01.bnznag.nz.thenational.com:18081/subjects/mytopic_avro-value/versions/1 --cert /var/ssl/private/kafka_broker.crt --key /var/ssl/private/kafka_broker.key
+- curl https://ansi-lab01-01.nrsh13-hadoop.com:18081/subjects/mytopic_avro-value/versions/1 --cert /var/ssl/private/kafka_broker.crt --key /var/ssl/private/kafka_broker.key
 
-WARN: Failed to get Schema from SR. Using Default Schema now HTTPSConnectionPool(host='ansi-lab01-01.bnznag.nz.thenational.com', port=18081): Max retries exceeded with url: /subjects/mytopic_avro-value/versions (Caused by SSLError(SSLError(1, '[SSL: SSLV3_ALERT_BAD_CERTIFICATE] sslv3 alert bad certificate (_ssl.c:2633)')))
+WARN: Failed to get Schema from SR. Using Default Schema now HTTPSConnectionPool(host='ansi-lab01-01.nrsh13-hadoop.com', port=18081): Max retries exceeded with url: /subjects/mytopic_avro-value/versions (Caused by SSLError(SSLError(1, '[SSL: SSLV3_ALERT_BAD_CERTIFICATE] sslv3 alert bad certificate (_ssl.c:2633)')))
 
 - when root cert is NOT mentioned properly.
 
-WARN: Failed to get Schema from SR. Using Default Schema now HTTPSConnectionPool(host='ansi-lab01-01.bnznag.nz.thenational.com', port=18081): Max retries exceeded with url: /subjects/mytopic_avro-value/versions (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1129)')))
+WARN: Failed to get Schema from SR. Using Default Schema now HTTPSConnectionPool(host='ansi-lab01-01.nrsh13-hadoop.com', port=18081): Max retries exceeded with url: /subjects/mytopic_avro-value/versions (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1129)')))
 
 
 ##6. When we just have ONE node/broker Installation
