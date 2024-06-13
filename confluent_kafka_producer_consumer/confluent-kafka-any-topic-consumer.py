@@ -67,8 +67,8 @@ def get_schema(SCHEMA_REGISTRY_URL,topic):
                 versions_response = requests.get(
                         url="{}/subjects/{}/versions".format(SCHEMA_REGISTRY_URL, subject),
                         headers=headers,
-                        cert=cert, # SSLV3_ALERT_BAD_CERTIFICATE
-                        verify=ssl_ca_location # CERTIFICATE_VERIFY_FAILED - unable to get local issuer certificate
+                        cert=cert if secure_cluster else None, # SSLV3_ALERT_BAD_CERTIFICATE
+                        verify=ssl_ca_location if secure_cluster else None # CERTIFICATE_VERIFY_FAILED - unable to get local issuer certificate
                 )
 
                 latest_version = versions_response.json()[-1]
@@ -77,8 +77,8 @@ def get_schema(SCHEMA_REGISTRY_URL,topic):
                 schema_response = requests.get(
                         url="{}/subjects/{}/versions/{}".format(SCHEMA_REGISTRY_URL, subject, latest_version),
                         headers=headers,
-                        cert=cert, # SSLV3_ALERT_BAD_CERTIFICATE
-                        verify=ssl_ca_location # CERTIFICATE_VERIFY_FAILED - unable to get local issuer certificate
+                        cert=cert if secure_cluster else None, # SSLV3_ALERT_BAD_CERTIFICATE
+                        verify=ssl_ca_location if secure_cluster else None # CERTIFICATE_VERIFY_FAILED - unable to get local issuer certificate
                 )
 
                 value_schema = schema_response.json()
@@ -91,11 +91,11 @@ def get_schema(SCHEMA_REGISTRY_URL,topic):
                 sys.exit(1)
 
 
-def deserialize_schema(SCHEMA_REGISTRY_URL, schema_str, consumer_deserializer_type = 'json'):
+def deserialize_schema(SCHEMA_REGISTRY_URL, schema_str, serializer_deserializer_type = 'json'):
 
     schema_registry_client = SchemaRegistryClient(schema_registry_conf)
 
-    if ( consumer_deserializer_type == 'json' ):
+    if ( serializer_deserializer_type == 'json' ):
       json_deserializer = JSONDeserializer(schema_str, from_dict=dict_to_user)
       return json_deserializer
     # For Avro
@@ -104,7 +104,7 @@ def deserialize_schema(SCHEMA_REGISTRY_URL, schema_str, consumer_deserializer_ty
       return avro_deserializer
 
 
-def consume_messages(consumer, topic, consumer_deserializer_type='json'):
+def consume_messages(consumer, topic, serializer_deserializer_type='json'):
 
     """ Consume Messages to the Topic """
     consumer.subscribe([topic])
@@ -124,7 +124,7 @@ def consume_messages(consumer, topic, consumer_deserializer_type='json'):
 
             user = msg.value()
 
-            if ( consumer_deserializer_type in ['avro', 'json'] ):
+            if ( serializer_deserializer_type in ['avro', 'json'] ):
               if user is not None:
                 print("User record {}: \n"
                       "\tfname: {}\n"
@@ -155,64 +155,77 @@ if __name__ == '__main__':
         hostnames = socket.gethostname()
 
         print("\n")
-        parser = argparse.ArgumentParser(description="Required Details For Kafka Producer -")
-        parser.add_argument('-p', dest="consumer_deserializer_type", required=True, default='none', choices=['avro', 'json', 'none'],
-            help="Serializer Type - avro, json or none")
+        parser = argparse.ArgumentParser(description="Required Details For Kafka:")
+        parser.add_argument('-sdt', dest="serializer_deserializer_type", required=True, default='none', choices=['avro', 'json', 'none'],
+                            help="Serializer Type - avro, json or none")
         parser.add_argument('-t', dest="topic", default="mytopic",
-            help="Topic name - Brand new if consumer_deserializer_type is changed")
-        parser.add_argument('-s', dest="kafka_server", required=False, default=hostnames,
-            help="Kafka, ZK and Schema Registry Servers - Assuming all runs on One Machine")
-        parser.add_argument('-secure', dest="secure_cluster", required=False, default=True, choices=['True', 'False'],
-            help="Kafka Cluster is Secure - True or False")
+                            help="Topic name - Brand new if serializer_deserializer_type is changed")
+        parser.add_argument('-kb', dest="kafka_server", required=False, default=hostnames,
+                            help="Kafka and ZK Server")
+        parser.add_argument('-sr', dest="schema_registry", required=False, default=hostnames,
+                            help="Schema Registry Server")
+        parser.add_argument('-secure', dest="secure_cluster", required=False, action='store_true',
+                            help="Kafka Cluster is Secure")
+
 
         args = parser.parse_args()
 
-        consumer_deserializer_type = args.consumer_deserializer_type
+        serializer_deserializer_type = args.serializer_deserializer_type
         topic = args.topic
-        hostname = args.kafka_server
-        secure_cluster = args.secure_cluster
+        kafkaBrokerServer = args.kafka_server
+        schemaRegistryServer = args.schema_registry
+        secure_cluster = args.secure_cluster  
 
-        print ("""        Dependencies - python3.9 -m pip install confluent-kafka[avro] confluent-kafka boto3 jsonschema
+        if secure_cluster is None:
+            secure_cluster = False
 
-        ALERT: This Script assumes All Services are running on same Machine {} !!
-        if NOT, Update the required Details in Main() section of the Script.""".format(hostname))
+        if schemaRegistryServer is None and serializer_deserializer_type in ['avro', 'json']:
+            print("\nError: Schema registry URL is required for Avro or JSON deserialization.\n")
+            parser.print_help()
+            exit(1)
+        elif not serializer_deserializer_type:
+            print("\nError: Please specify the serializer type (-p).\n")
+            parser.print_help()
+            exit(1)  
 
-        ##### Update Details Start
-        kafkaBrokerServer = hostname
-        zookeeperServer = hostname
-        schemaRegistryServer = hostname
-
-        if secure_cluster is True:
+        if secure_cluster:
             kafkaBrokerPort = 9093
-            zookeeperPort = 2181
             schemaRegistryPort = 18081
             SCHEMA_REGISTRY_URL = 'https://'+schemaRegistryServer+':'+str(schemaRegistryPort)
         else:
             kafkaBrokerPort = 9092
-            zookeeperPort = 2181
             schemaRegistryPort = 8081
             SCHEMA_REGISTRY_URL = 'http://'+schemaRegistryServer+':'+str(schemaRegistryPort)
 
-        zookeeper = zookeeperServer+":"+str(zookeeperPort)
         kafkaBroker = kafkaBrokerServer+":"+str(kafkaBrokerPort)
 
         # Security
         security_protocol = 'SSL'
-        ssl_ca_location = "/var/ssl/private/ca.crt"  # Root Cert
-        ssl_key_location = '/var/ssl/private/kafka_broker.key' # Priavte Key
-        ssl_certificate_location = '/var/ssl/private/kafka_broker.crt' # Response Cert - kafka-connect-lab01.nrsh13-hadoop.com
+        ssl_ca_location = "/tmp/ca.crt"  # Root Cert
+        ssl_key_location = '/tmp/kafka.key' # Priavte Key
+        ssl_certificate_location = '/tmp/kafka.crt' # Response Cert - kafka-connect-lab01.nrsh13-hadoop.com
         # Update Details End
+
+        if secure_cluster:
+            # Check if the cert files exist
+            if not (os.path.exists(ssl_ca_location) and os.path.exists(ssl_key_location) and os.path.exists(ssl_certificate_location)):
+                print("Error: As you chose -secure option. Please make sure these files are in the /tmp/ folder:\n")
+                print(f"\tRoot Cert: {ssl_ca_location}")
+                print(f"\tPrivate Key: {ssl_key_location}")
+                print(f"\tResponse Cert: {ssl_certificate_location}\n\n")
+                sys.exit(1)  # Exiting the script        
 
         print ("""\nINFO: Kakfa Connection Details:
 
+        Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema.
         Kafka Broker     :  %s
-        Zookeeper        :  %s
+        Schema Registry  :  %s
         Topic            :  %s
         Serializer Type  :  %s
-        Secure Cluster   :  %s """ %(kafkaBroker,zookeeper,topic,consumer_deserializer_type,secure_cluster))
+        Secure Cluster   :  %s """ %(kafkaBroker,SCHEMA_REGISTRY_URL,topic,serializer_deserializer_type,secure_cluster))
 
         # Test HOW Access is sorted based on certificate CN
-        if secure_cluster is True:
+        if secure_cluster:
             kafka_conf = {
                     "bootstrap.servers": kafkaBroker,
                     "group.id": topic + "-consumer",
@@ -237,30 +250,30 @@ if __name__ == '__main__':
 
         consumer_conf = kafka_conf
 
-        if ( consumer_deserializer_type == 'avro' ):
-            print ("\nINFO: Get %s Schema for Topic %s" %(consumer_deserializer_type, topic))
+        if ( serializer_deserializer_type == 'avro' ):
+            print ("\nINFO: Get %s Schema for Topic %s" %(serializer_deserializer_type, topic))
             schema_str = get_schema(SCHEMA_REGISTRY_URL,topic)
             print ("\nINFO: Deserialize Schema for Topic %s" %(topic))
-            avro_deserializer = deserialize_schema(schema_registry_conf, schema_str, consumer_deserializer_type)
-        elif ( consumer_deserializer_type == 'json' ):
-            print ("\nINFO: Get %s Schema for Topic %s" %(consumer_deserializer_type, topic))
+            avro_deserializer = deserialize_schema(schema_registry_conf, schema_str, serializer_deserializer_type)
+        elif ( serializer_deserializer_type == 'json' ):
+            print ("\nINFO: Get %s Schema for Topic %s" %(serializer_deserializer_type, topic))
             schema_str = get_schema(SCHEMA_REGISTRY_URL,topic)
             print ("\nINFO: Deserialize Schema for Topic %s" %(topic))
-            json_deserializer = deserialize_schema(schema_registry_conf, schema_str, consumer_deserializer_type)
+            json_deserializer = deserialize_schema(schema_registry_conf, schema_str, serializer_deserializer_type)
         else:
             print ("\nINFO: No Schema Pull Required for Non Serialzer topic %s" %topic)
 
         print ("\nINFO: Create Client obj for Kafka Connection")
 
-        if ( consumer_deserializer_type == 'avro' ):
+        if ( serializer_deserializer_type == 'avro' ):
             consumer_conf['key.deserializer'] = StringDeserializer('utf_8')
             consumer_conf['value.deserializer'] = avro_deserializer
             consumer = DeserializingConsumer(consumer_conf)
-        elif ( consumer_deserializer_type == 'json' ):
+        elif ( serializer_deserializer_type == 'json' ):
             consumer_conf['key.deserializer'] = StringDeserializer('utf_8')
             consumer_conf['value.deserializer'] = json_deserializer # without this - Exception happened : a bytes-like object is required, not 'User'
             consumer = DeserializingConsumer(consumer_conf)
         else:
             consumer = Consumer(consumer_conf)
 
-        consume_messages(consumer, topic, consumer_deserializer_type)
+        consume_messages(consumer, topic, serializer_deserializer_type)

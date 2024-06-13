@@ -106,10 +106,10 @@ def get_schema(SCHEMA_REGISTRY_URL,topic):
                 return 'none'
 
 
-def serialize_schema(SCHEMA_REGISTRY_URL, schema_str, producer_serializer_type = 'json'):
+def serialize_schema(SCHEMA_REGISTRY_URL, schema_str, serializer_deserializer_type = 'json'):
 
     # Use below schemas when Schema does not exists in SR.
-    if ( producer_serializer_type == 'json' and schema_str == 'none' ):
+    if ( serializer_deserializer_type == 'json' and schema_str == 'none' ):
       schema_str = """
     {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -156,7 +156,7 @@ def serialize_schema(SCHEMA_REGISTRY_URL, schema_str, producer_serializer_type =
     }
     """
     # For Avro
-    elif ( producer_serializer_type == 'avro' and schema_str == 'none' ) :
+    elif ( serializer_deserializer_type == 'avro' and schema_str == 'none' ) :
 
       schema_str = """
 {
@@ -211,7 +211,7 @@ def serialize_schema(SCHEMA_REGISTRY_URL, schema_str, producer_serializer_type =
 
     schema_registry_client = SchemaRegistryClient(schema_registry_conf)
 
-    if ( producer_serializer_type == 'json' ):
+    if ( serializer_deserializer_type == 'json' ):
       json_serializer = JSONSerializer(schema_str, schema_registry_client, user_to_dict)
       return json_serializer
     # For Avro
@@ -245,7 +245,7 @@ def check_topic_existence(connection, topic):
                         sys.exit()
 
 
-def produce_messages(producer, num_mesg, topic, producer_serializer_type='json'):
+def produce_messages(producer, num_mesg, topic, serializer_deserializer_type='json'):
 
     """ Produce Messages to the Topic """
 
@@ -276,7 +276,7 @@ def produce_messages(producer, num_mesg, topic, producer_serializer_type='json')
 
                 key =  mobile
 
-                if ( producer_serializer_type in ['avro', 'json'] ):
+                if ( serializer_deserializer_type in ['avro', 'json'] ):
                     user = User(fname=fname,
                             lname=lname,
                             email=fname+'_'+lname+email,
@@ -308,67 +308,78 @@ if __name__ == '__main__':
         hostnames = socket.gethostname()
 
         print("\n")
-        parser = argparse.ArgumentParser(description="Required Details For Kafka Producer -")
-        parser.add_argument('-p', dest="producer_serializer_type", required=True, default='none', choices=['avro', 'json', 'none'],
-            help="Serializer Type - avro, json or none")
+        parser = argparse.ArgumentParser(description="Required Details For Kafka:")
+        parser.add_argument('-sdt', dest="serializer_deserializer_type", required=True, default='none', choices=['avro', 'json', 'none'],
+                            help="Serializer Type - avro, json or none")
         parser.add_argument('-t', dest="topic", default="mytopic",
-            help="Topic name - Brand new if producer_serializer_type is changed")
-        parser.add_argument('-n', dest="num_mesg", required=False, default=5,
-            help="Number of Messages you want ot Produce")
-        parser.add_argument('-s', dest="kafka_server", required=False, default=hostnames,
-            help="Kafka, ZK and Schema Registry Servers - Assuming all runs on One Machine")
-        parser.add_argument('-secure', dest="secure_cluster", required=False, default=True, choices=['True', 'False'],
-            help="Kafka Cluster is Secure - True or False")
+                            help="Topic name - Brand new if serializer_deserializer_type is changed")
+        parser.add_argument('-kb', dest="kafka_server", required=False, default=hostnames,
+                            help="Kafka and ZK Server")
+        parser.add_argument('-sr', dest="schema_registry", required=False, default=hostnames,
+                            help="Schema Registry Server")
+        parser.add_argument('-secure', dest="secure_cluster", required=False, action='store_true',
+                            help="Kafka Cluster is Secure")
+
 
         args = parser.parse_args()
 
-        producer_serializer_type = args.producer_serializer_type
+        serializer_deserializer_type = args.serializer_deserializer_type
         topic = args.topic
-        num_mesg = int(args.num_mesg)
-        hostname = args.kafka_server
-        secure_cluster = args.secure_cluster
+        kafkaBrokerServer = args.kafka_server
+        schemaRegistryServer = args.schema_registry
+        secure_cluster = args.secure_cluster  
 
-        print ("""        Dependencies - python3.9 -m pip install confluent-kafka[avro] confluent-kafka boto3 jsonschema
+        if secure_cluster is None:
+            secure_cluster = False
 
-        ALERT: This Script assumes All Services are running on same Machine {} !!
-        if NOT, Update the required Details in Main() section of the Script.""".format(hostname))
+        if schemaRegistryServer is None and serializer_deserializer_type in ['avro', 'json']:
+            print("\nError: Schema registry URL is required for Avro or JSON deserialization.\n")
+            parser.print_help()
+            exit(1)
+        elif not serializer_deserializer_type:
+            print("\nError: Please specify the serializer type (-p).\n")
+            parser.print_help()
+            exit(1)  
 
-        ##### Update Details Start
-        kafkaBrokerServer = hostname
-        zookeeperServer = hostname
-        schemaRegistryServer = hostname
+        # Security
+        security_protocol = 'SSL'
+        ssl_ca_location = "/tmp/ca.crt"  # Root Cert
+        ssl_key_location = '/tmp/kafka.key' # Priavte Key
+        ssl_certificate_location = '/tmp/kafka.crt' # Response Cert - kafka-connect-lab01.nrsh13-hadoop.com
+        # Update Details End
 
-        if secure_cluster is True:
+        if secure_cluster:
             kafkaBrokerPort = 9093
-            zookeeperPort = 2181
             schemaRegistryPort = 18081
             SCHEMA_REGISTRY_URL = 'https://'+schemaRegistryServer+':'+str(schemaRegistryPort)
         else:
             kafkaBrokerPort = 9092
-            zookeeperPort = 2181
             schemaRegistryPort = 8081
             SCHEMA_REGISTRY_URL = 'http://'+schemaRegistryServer+':'+str(schemaRegistryPort)
 
-        zookeeper = zookeeperServer+":"+str(zookeeperPort)
         kafkaBroker = kafkaBrokerServer+":"+str(kafkaBrokerPort)
 
-        # Security
-        security_protocol = 'SSL'
-        ssl_ca_location = "/var/ssl/private/ca.crt"  # Root Cert
-        ssl_key_location = '/var/ssl/private/kafka_broker.key' # Priavte Key
-        ssl_certificate_location = '/var/ssl/private/kafka_broker.crt' # Response Cert - kafka-connect-lab01.nrsh13-hadoop.com
-        # Update Details End
+        if secure_cluster:
+            # Check if the cert files exist
+            if not (os.path.exists(ssl_ca_location) and os.path.exists(ssl_key_location) and os.path.exists(ssl_certificate_location)):
+                print("Error: As you chose -secure option. Please make sure these files are in the /tmp/ folder:\n")
+                print(f"\tRoot Cert: {ssl_ca_location}")
+                print(f"\tPrivate Key: {ssl_key_location}")
+                print(f"\tResponse Cert: {ssl_certificate_location}\n\n")
+                sys.exit(1)  # Exiting the script        
+
 
         print ("""\nINFO: Kakfa Connection Details:
 
+        Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema.
         Kafka Broker     :  %s
-        Zookeeper        :  %s
+        Schema Registry  :  %s
         Topic            :  %s
         Serializer Type  :  %s
-        Secure Cluster   :  %s """ %(kafkaBroker,zookeeper,topic,producer_serializer_type,secure_cluster))
+        Secure Cluster   :  %s """ %(kafkaBroker,SCHEMA_REGISTRY_URL,topic,serializer_deserializer_type,secure_cluster))
 
         # Test HOW Access is sorted based on certificate CN
-        if secure_cluster is True:
+        if secure_cluster:
             kafka_conf = {
                     "bootstrap.servers": kafkaBroker,
                     "security.protocol": security_protocol,
@@ -397,31 +408,31 @@ if __name__ == '__main__':
 
         producer_conf = kafka_conf
 
-        if ( producer_serializer_type == 'avro' ):
-            print ("\nINFO: Get %s Schema for Topic %s" %(producer_serializer_type, topic))
+        if ( serializer_deserializer_type == 'avro' ):
+            print ("\nINFO: Get %s Schema for Topic %s" %(serializer_deserializer_type, topic))
             schema_str = get_schema(SCHEMA_REGISTRY_URL,topic)
-            print ("\nINFO: Set up %s Schema for Topic %s" %(producer_serializer_type, topic))
-            avro_serializer = serialize_schema(schema_registry_conf, schema_str, producer_serializer_type)
-        elif ( producer_serializer_type == 'json' ):
-            print ("\nINFO: Get %s Schema for Topic %s" %(producer_serializer_type, topic))
+            print ("\nINFO: Set up %s Schema for Topic %s" %(serializer_deserializer_type, topic))
+            avro_serializer = serialize_schema(schema_registry_conf, schema_str, serializer_deserializer_type)
+        elif ( serializer_deserializer_type == 'json' ):
+            print ("\nINFO: Get %s Schema for Topic %s" %(serializer_deserializer_type, topic))
             print(SCHEMA_REGISTRY_URL)
             schema_str = get_schema(SCHEMA_REGISTRY_URL,topic)
-            print ("\nINFO: Set up %s Schema for Topic %s" %(producer_serializer_type, topic))
-            json_serializer = serialize_schema(schema_registry_conf, schema_str, producer_serializer_type)
+            print ("\nINFO: Set up %s Schema for Topic %s" %(serializer_deserializer_type, topic))
+            json_serializer = serialize_schema(schema_registry_conf, schema_str, serializer_deserializer_type)
         else:
             print ("\nINFO: No Schema set Required for None Option")
 
         print ("\nINFO: Create Client obj for Kafka Connection")
 
-        if ( producer_serializer_type == 'avro' ):
+        if ( serializer_deserializer_type == 'avro' ):
             producer_conf['key.serializer'] = StringSerializer('utf_8')
             producer_conf['value.serializer'] = avro_serializer
             producer = SerializingProducer(producer_conf)
-        elif ( producer_serializer_type == 'json' ):
+        elif ( serializer_deserializer_type == 'json' ):
             producer_conf['key.serializer'] = StringSerializer('utf_8')
             producer_conf['value.serializer'] = json_serializer # without this - Exception happened : a bytes-like object is required, not 'User'
             producer = SerializingProducer(producer_conf)
         else:
             producer = Producer(producer_conf)
 
-        produce_messages(producer,int(num_mesg),topic, producer_serializer_type)
+        produce_messages(producer,int(num_mesg),topic, serializer_deserializer_type)
