@@ -43,7 +43,11 @@ def dict_to_user(obj, ctx):
     if obj is None:
         return None
 
-    return User(fname=obj['fname'],
+    if asyncapi:
+        return User(obj['metadata'],
+            obj['data'])
+    else:
+        return User(fname=obj['fname'],
             lname=obj['lname'],
             email=obj['email'],
             ipaddress=obj['ipaddress'],
@@ -134,13 +138,15 @@ def consume_messages(consumer, topic, serializer_deserializer_type='json'):
                       "\tpassport_expiry_date: {}\n"
                       "\tpassport_make_date: {}\n"
                       "\tmobile: {}\n"
-                      .format(msg.key(), user.fname,
-                              user.lname,
-                              user.email,
-                              user.principal,
-                              user.passport_expiry_date,
-                              user.passport_make_date,
-                              user.mobile))
+                      .format(msg.key(),
+                            user.data['fname'] if asyncapi else user.fname,
+                            user.data['lname'] if asyncapi else user.lname,
+                            user.data['email'] if asyncapi else user.email,
+                            user.data['principal'] if asyncapi else user.principal,
+                            user.data['passport_expiry_date'] if asyncapi else user.passport_expiry_date,
+                            user.data['passport_make_date'] if asyncapi else user.passport_make_date,
+                            user.data['mobile'] if asyncapi else user.mobile)
+                    )                      
             else:
                 print('Message Received: {}\n'.format(user))
 
@@ -166,15 +172,21 @@ if __name__ == '__main__':
                             help="Schema Registry Server")
         parser.add_argument('-secure', dest="secure_cluster", required=False, action='store_true',
                             help="Kafka Cluster is Secure")
+        parser.add_argument('-asyncapi', dest="asyncapi_enabled", required=False, action='store_true',
+                            help="Kafka topics using asyncapi")   
+        parser.add_argument('-cid', dest="clientID", default=None,
+                            help="Client ID having access to consume from topic")             
 
 
         args = parser.parse_args()
 
-        serializer_deserializer_type = args.serializer_deserializer_type
         topic = args.topic
         kafkaBrokerServer = args.kafka_server
         schemaRegistryServer = args.schema_registry
-        secure_cluster = args.secure_cluster  
+        secure_cluster = args.secure_cluster
+        asyncapi = args.asyncapi_enabled
+        serializer_deserializer_type = args.serializer_deserializer_type  
+        clientID = args.clientID if args.clientID else f"{topic}-consumer"
 
         if secure_cluster is None:
             secure_cluster = False
@@ -222,13 +234,14 @@ if __name__ == '__main__':
         Schema Registry  :  %s
         Topic            :  %s
         Serializer Type  :  %s
-        Secure Cluster   :  %s """ %(kafkaBroker,SCHEMA_REGISTRY_URL,topic,serializer_deserializer_type,secure_cluster))
+        AsyncAPI Used    :  %s
+        Secure Cluster   :  %s """ %(kafkaBroker,SCHEMA_REGISTRY_URL,topic,serializer_deserializer_type,asyncapi,secure_cluster))
 
         # Test HOW Access is sorted based on certificate CN
         if secure_cluster:
             kafka_conf = {
                     "bootstrap.servers": kafkaBroker,
-                    "group.id": topic + "-consumer",
+                    "group.id": clientID,
                     "security.protocol": security_protocol,
                     "ssl.certificate.location": ssl_certificate_location,
                     "ssl.ca.location": ssl_ca_location,
@@ -242,7 +255,7 @@ if __name__ == '__main__':
         else:
             kafka_conf = {
                     "bootstrap.servers": kafkaBroker,
-                    "group.id": topic + "-consumer"
+                    "group.id": clientID
             }
             schema_registry_conf = {
                     'url': SCHEMA_REGISTRY_URL
