@@ -5,7 +5,7 @@ provider "aws" {
   # access_key = "yourAccessKey"
   # secret_key = "YourSecretKey"
   # assume_role {
-  #   role_arn = "arn:aws:iam::${var.aws_account_id}:role/TerraformRole"
+  #   role_arn = "arn:aws:iam::${data.aws_caller_identity.account.id}:role/TerraformRole"
   # }
 }
 terraform {

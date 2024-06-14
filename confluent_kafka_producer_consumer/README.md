@@ -12,16 +12,8 @@ This project contains a Confluent Kafka Python Producer and Consumer code. This 
     yum install -y python39
     python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv
 ```
-- For Secure Kafka Cluster, Make sure security details are updated (location of the certs). NO CHANGES NEED IF USING ANY OF THE KAFKA BROKER TO USE THIS CODE.
+- For Secure Kafka Cluster, Make sure the root.crt/ca.crt, kafka.crt and kafka.key are present at ${HOME}/Downloads folder. kafka.key and kafka.crt are user certs having required permissons on the topic. NO CHANGES NEED IF USING ANY OF THE KAFKA BROKER TO USE THIS CODE.
 
-Read secure_cluster_settings_for_using_Producer_Consumer.md for more requirements. 
-```
-    # Security
-    security_protocol = 'SSL'
-    ssl_ca_location = "/var/ssl/private/ca.crt"  # Root Cert
-    ssl_key_location = '/var/ssl/private/kafka_broker.key' # Priavte Key
-    ssl_certificate_location = '/var/ssl/private/kafka_broker.crt' # Response Cert
-```
 
 ## How to Run
 - Check help for required arguments
@@ -30,34 +22,40 @@ Read secure_cluster_settings_for_using_Producer_Consumer.md for more requirement
 
 [root@ansible ~]# python3.9 /tmp/confluent-kafka-any-topic-producer.py -h
 
-usage: confluent-kafka-any-topic-producer.py [-h] -p {avro,json,none} [-t TOPIC] [-n NUM_MESG] [-s KAFKA_SERVER] [-secure {True,False}]
 
-Required Details For Kafka Producer -
+usage: confluent-kafka-any-topic-producer.py [-h] [-t TOPIC] [-kb KAFKA_SERVER] [-sr SCHEMA_REGISTRY] [-cid CLIENTID] -sdt SERIALIZER_DESERIALIZER_TYPE [-secure] [-asyncapi]
 
-optional arguments:
+Required Details For Kafka:
+
+options:
   -h, --help            show this help message and exit
-  -p {avro,json,none}   Serializer Type - avro, json or none
-  -t TOPIC              Topic name - Brand new if producer_serializer_type is changed
-  -n NUM_MESG           Number of Messages you want ot Produce
-  -s KAFKA_SERVER       Kafka, ZK and Schema Registry Servers - Assuming all runs on One Machine
-  -secure {True,False}  Kafka Cluster is Secure - True or False
-
+  -t TOPIC              Topic name - Brand new if serializer_deserializer_type is changed
+  -kb KAFKA_SERVER      Kafka Broker with port - hostname:9092
+  -sr SCHEMA_REGISTRY   Schema Registry full URL - https://hostname:18081
+  -cid CLIENTID         Client ID having access to consume from topic
+  -sdt SERIALIZER_DESERIALIZER_TYPE
+                        Serializer Deserializer Type - avro, json or none
+  -secure               Kafka Cluster is Secure
+  -asyncapi             Kafka topics using asyncapi
 
 # Help for Consumer
 
 [root@ansible ~]#  python3.9 /tmp/confluent-kafka-any-topic-consumer.py -h
 
+usage: confluent-kafka-any-topic-consumer.py [-h] [-t TOPIC] [-kb KAFKA_SERVER] [-sr SCHEMA_REGISTRY] [-cid CLIENTID] -sdt SERIALIZER_DESERIALIZER_TYPE [-secure] [-asyncapi]
 
-usage: confluent-kafka-any-topic-consumer.py [-h] -p {avro,json,none} [-t TOPIC] [-s KAFKA_SERVER] [-secure {True,False}]
+Required Details For Kafka:
 
-Required Details For Kafka Producer -
-
-optional arguments:
+options:
   -h, --help            show this help message and exit
-  -p {avro,json,none}   Serializer Type - avro, json or none
-  -t TOPIC              Topic name - Brand new if consumer_deserializer_type is changed
-  -s KAFKA_SERVER       Kafka, ZK and Schema Registry Servers - Assuming all runs on One Machine
-  -secure {True,False}  Kafka Cluster is Secure - True or False
+  -t TOPIC              Topic name - Brand new if serializer_deserializer_type is changed
+  -kb KAFKA_SERVER      Kafka Broker with port - hostname:9092
+  -sr SCHEMA_REGISTRY   Schema Registry full URL - https://hostname:18081
+  -cid CLIENTID         Client ID having access to consume from topic
+  -sdt SERIALIZER_DESERIALIZER_TYPE
+                        Serializer Deserializer Type - avro, json or none
+  -secure               Kafka Cluster is Secure
+  -asyncapi             Kafka topics using asyncapi
 ```
 
 - Running Producer

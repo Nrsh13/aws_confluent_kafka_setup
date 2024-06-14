@@ -2,9 +2,9 @@
 
 # EC2 Server SG
 resource "aws_security_group" "ec2_server_sg" {
-  name          = "${var.environment}-${var.instance}-${var.component}ServerSG"
+  name          = "${var.project}-${var.environment}-${var.component}ServerSG"
   description   = "The security group for the ${var.component} Server"
-  vpc_id        = "${var.vpc_id}"
+  vpc_id        = "${data.aws_vpc.current_vpc.id}"
   tags          = "${var.common_tags}"
 
   # Egress
@@ -13,7 +13,7 @@ resource "aws_security_group" "ec2_server_sg" {
     from_port = 22
     to_port = 22
     protocol = "tcp"
-    cidr_blocks = "${var.vpc_cidr}"
+    cidr_blocks = ["${data.aws_vpc.current_vpc.cidr_block}"]
   }
 
   egress {
@@ -30,7 +30,7 @@ resource "aws_security_group" "ec2_server_sg" {
     from_port = 22
     to_port = 22
     protocol = "tcp"
-    cidr_blocks = "${var.vpc_cidr}"
+    cidr_blocks = ["${data.aws_vpc.current_vpc.cidr_block}"]
   }
 
   ingress {

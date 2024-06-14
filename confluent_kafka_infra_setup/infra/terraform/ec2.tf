@@ -11,8 +11,8 @@ resource "aws_instance" "my_ec2_instances" {
   count = "${var.instance_count}"
   ami = "${var.ami}"
   instance_type = "${var.instance_type}"
-  iam_instance_profile = "${var.environment}-${var.instance}-${var.component}EC2RoleInstanceProfile"
-  tags = merge(var.common_tags,var.specific_tags, {"Name"="${var.component}-${var.instance}-0${count.index + 1}"})
+  iam_instance_profile = "${var.project}-${var.environment}-${var.component}EC2RoleInstanceProfile"
+  tags = merge(var.common_tags,var.specific_tags, {"Name"="${var.component}-${var.environment}-0${count.index + 1}"})
   #subnet_id = element(sort(data.aws_subnet_ids.subnet_ids.ids), 0)
   subnet_id = element(sort(data.aws_subnets.subnet_ids.ids), "${count.index + 1}")
   vpc_security_group_ids = ["${aws_security_group.ec2_server_sg.id}"]
@@ -33,14 +33,14 @@ resource "aws_instance" "my_ec2_instances" {
   connection {
     type     = "ssh"
     user     = "ansible"
-    private_key = "${file("../../scripts/ansible.pem")}"
+    private_key = file(var.ssh_private_key_file_location)
     host     = "${self.public_ip}"
   }
 
   provisioner "remote-exec" {
     inline = [
       "set -x",
-      # "sudo -s bash -c \"hostnamectl set-hostname ${var.component}-${var.instance}-0${count.index + 1}${var.hostname_domain}\"",
+      # "sudo -s bash -c \"hostnamectl set-hostname ${var.component}-${var.environment}-0${count.index + 1}${var.hostname_domain}\"",
       "sleep 120", #wait for 2 mins and then check userdata status using cloud-init
       "cloud-init status --wait"
     ]
@@ -63,7 +63,7 @@ resource "null_resource" "ansible" {
       "bash" , "-c"
     ]
     command = <<-EOT
-      sh ../../scripts/post-setup.sh ${var.component} ${var.instance}  ${var.instance_count} ${var.hostname_domain} ${var.passwordless_ssh_user}
+      sh ../../scripts/post-setup.sh ${var.component} ${var.environment}  ${var.instance_count} ${var.hostname_domain} ${var.passwordless_ssh_user}
     EOT
   }
 

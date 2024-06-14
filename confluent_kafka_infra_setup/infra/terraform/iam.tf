@@ -1,5 +1,5 @@
 locals {
-  mandatory_policy_arns     = formatlist("arn:aws:iam::%s:policy/%s", var.aws_account_id, var.mandatory_policies)
+  mandatory_policy_arns     = formatlist("arn:aws:iam::%s:policy/%s", data.aws_caller_identity.account.id, var.mandatory_policies)
   attach_policy_arns        = concat(local.mandatory_policy_arns, var.extra_policy_arns)
   create_permissions_policy = var.create != "" ? 1 : 0
 }
@@ -52,8 +52,8 @@ data "aws_iam_policy_document" "iam_base_policy" {
 
 ## IAM Role
 resource "aws_iam_role" "this" {
-  name                 = "${var.environment}-${var.instance}-${var.component}EC2Role"
-  description          = "${var.environment}-${var.instance}-${var.component}EC2Role"
+  name                 = "${var.project}-${var.environment}-${var.component}EC2Role"
+  description          = "${var.project}-${var.environment}-${var.component}EC2Role"
   permissions_boundary = "${var.iam_role_permissions_boundary}"
   assume_role_policy   = <<EOF
 {
@@ -77,7 +77,7 @@ resource "aws_iam_role" "this" {
 # Creates a policy to attach to the role
 resource "aws_iam_policy" "this" {
   count  = local.create_permissions_policy
-  name   = "${var.environment}-${var.instance}-${var.component}EC2RolePolicy"
+  name   = "${var.project}-${var.environment}-${var.component}EC2RolePolicy"
   policy = data.aws_iam_policy_document.iam_base_policy.json
 }
 
@@ -101,6 +101,6 @@ resource "aws_iam_role_policy_attachment" "extra" {
 
 resource "aws_iam_instance_profile" "this" {
   count = var.create && var.create_instance_profile ? 1 : 0
-  name  = "${var.environment}-${var.instance}-${var.component}EC2RoleInstanceProfile"
+  name  = "${var.project}-${var.environment}-${var.component}EC2RoleInstanceProfile"
   role  = aws_iam_role.this.name
 }

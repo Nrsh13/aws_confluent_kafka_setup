@@ -1,19 +1,9 @@
 # Secure Confluent Cluster Requirements for Producer & Consumer
 
-- Update the Kafka Broker and Schema Registry Hostnames - Default is current machine where you are running the code from.
+- Just run below and it will display all required options:
 ```
-kafkaBrokerServer = hostname
-zookeeperServer = hostname
-schemaRegistryServer = hostname
-```
-
-- Make sure Keystore/Certs/Key is available on the machine. Below location and names are being used.
-```
-security_protocol = 'SSL'
-ssl_ca_location = "/var/ssl/private/ca.crt"  # Root Cert
-ssl_key_location = '/var/ssl/private/kafka_broker.key' # Priavte Key
-ssl_certificate_location = '/var/ssl/private/kafka_broker.crt' # Response Cert
-```
+python confluent-kafka-any-topic-consumer.py -h
+``` 
 
 - Required Permissions on Schema Registry Subject, Topic and Consumer Group is required. 
 	- if you have used, confluent_kafka_setup_secure folder for the setup, these permissions are already setu.

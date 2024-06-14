@@ -1,13 +1,8 @@
 ######################### Common Variables #########################
 
-variable "aws_account_id" {
-  description = "The AWS Account Number"
-  type = string
-}
-
-variable "vpc_id" {
-  description = "The VPC ID"
-  type = string
+variable "project" {
+description = "Project name say nrsh13"
+type = string
 }
 
 variable "aws_region" {
@@ -18,11 +13,6 @@ variable "aws_region" {
 variable "environment" {
   description = "(Required) Environment name. E.g. rstnonprod"
   type = string
-}
-
-variable "instance" {
-description = "(Required) Instnace name. E.g. ppte01"
-type = string
 }
 
 variable "component" {
@@ -42,11 +32,6 @@ variable "specific_tags" {
 
 
 ######################### Component Variables #########################
-
-variable "vpc_cidr" {
-  description = "The VPC CIDR Block range"
-  type = list
-}
 
 variable "ami" {
   description = "The AMI ID"
@@ -104,6 +89,12 @@ variable "iam_role_permissions_boundary" {
 }
 
 # SSH 
+variable "ssh_private_key_file_location" {
+  type  = string
+  description = "File will be used by local-exec in ec2.tf"
+  default = "~/.ssh/id_rsa"
+}
+
 variable "keypair_public_key" {
   description = "Keypair public key. Generate using ssh-keygen -C userName"
 }

@@ -2,12 +2,14 @@
 # This is a simple example of the SerializingProducer using JSON and Avro.
 
 # Python Modules
+from uuid import uuid4
 import random, struct, sys, os, requests
 import socket, json, sys, time, random
 import os, random, argparse
 import datetime
 from dateutil.relativedelta import relativedelta
 import struct, socket
+from dotenv import load_dotenv
 
 from confluent_kafka import admin
 from confluent_kafka import KafkaException
@@ -24,24 +26,33 @@ class User(object):
     Required when we used SerializingProducer|DeserializingConsumer instead of Producer|Consumer Method.
     SerializingProducer|DeserializingProducer - includes registering|deregistring Schema in SR
     """
-    def __init__(self, fname, lname, principal, email, ipaddress, passport_expiry_date, passport_make_date, mobile):
-        self.fname = fname
-        self.lname = lname
-        self.principal = principal
-        self.email = email
-        self.ipaddress = ipaddress
-        self.passport_expiry_date = passport_expiry_date
-        self.passport_make_date = passport_make_date
-        self.mobile = mobile
+
+    def __init__(self, metadata=None, data=None, **kwargs):
+        if asyncapi:
+            self.metadata = metadata
+            self.data = data
+        else:
+            self.fname = kwargs.get('fname')
+            self.lname = kwargs.get('lname')
+            self.principal = kwargs.get('principal')
+            self.email = kwargs.get('email')
+            self.ipaddress = kwargs.get('ipaddress')
+            self.passport_expiry_date = kwargs.get('passport_expiry_date')
+            self.passport_make_date = kwargs.get('passport_make_date')
+            self.mobile = kwargs.get('mobile')
 
 
-def user_to_dict(user, ctx):
+def user_to_dict(user, ctx, asyncapi):
     """
     Returns a dict representation of a User instance for serialization.
     Returns:
         dict: Dict populated with user attributes to be serialized.
     """
-    return dict(fname=user.fname,
+    if asyncapi:
+      return dict(metadata=user.metadata,
+            data=user.data)
+    else:
+      return dict(fname=user.fname,
             lname=user.lname,
             email=user.email,
             ipaddress=user.ipaddress,
@@ -158,7 +169,111 @@ def serialize_schema(SCHEMA_REGISTRY_URL, schema_str, serializer_deserializer_ty
     # For Avro
     elif ( serializer_deserializer_type == 'avro' and schema_str == 'none' ) :
 
-      schema_str = """
+      ## Different if we used asyncapi
+      if asyncapi:
+          
+        schema_str = """
+{
+  "fields": [
+    {
+      "default": null,
+      "name": "metadata",
+      "type": [
+        "null",
+        {
+          "fields": [
+            {
+              "name": "id",
+              "type": "string"
+            },
+            {
+              "name": "time",
+              "type": "string"
+            },
+            {
+              "name": "subject",
+              "type": "string"
+            },
+            {
+              "name": "source",
+              "type": "string"
+            },
+            {
+              "name": "type",
+              "type": "string"
+            },
+            {
+              "default": null,
+              "name": "correlationId",
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "name": "TestAvroEventsMetaData",
+          "type": "record"
+        }
+      ]
+    },
+    {
+      "default": null,
+      "name": "data",
+      "type": [
+        "null",
+        {
+          "fields": [
+            {
+              "name": "fname",
+              "type": "string"
+            },
+            {
+              "name": "lname",
+              "type": "string"
+            },
+            {
+              "name": "email",
+              "type": "string"
+            },
+            {
+              "name": "principal",
+              "type": "string"
+            },
+            {
+              "default": null,
+              "name": "ipaddress",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "mobile",
+              "type": "long"
+            },
+            {
+              "name": "passport_make_date",
+              "type": "string"
+            },
+            {
+              "name": "passport_expiry_date",
+              "type": "string"
+            }
+          ],
+          "name": "TestAvroEventsData",
+          "type": "record"
+        }
+      ]
+    }
+  ],
+  "name": "TestAvroEventsMessageValue",
+  "namespace": "DOMAIN.SUBDOMAIN",
+  "type": "record"
+}
+"""
+
+      else:
+        schema_str = """
 {
   "name": "value",
   "namespace": "mytopic",
@@ -212,13 +327,13 @@ def serialize_schema(SCHEMA_REGISTRY_URL, schema_str, serializer_deserializer_ty
     schema_registry_client = SchemaRegistryClient(schema_registry_conf)
 
     if ( serializer_deserializer_type == 'json' ):
-      json_serializer = JSONSerializer(schema_str, schema_registry_client, user_to_dict)
+      json_serializer = JSONSerializer(schema_str, schema_registry_client, user_to_dict(asyncapi))
       return json_serializer
     # For Avro
     else: # To Avoid Producer writing the schema to SR. set below. NO Permissions in Enterprise Kafka to write the schema.
       #pro_conf = {"auto.register.schemas": False}
       #avro_serializer = AvroSerializer(schema_registry_client, schema_str, user_to_dict, conf=pro_conf)
-      avro_serializer = AvroSerializer(schema_registry_client, schema_str, user_to_dict) # Order of arguments is different from JSONSerializer and important. AttributeError: 'SchemaRegistryClient' object has no attribute 'strip'
+      avro_serializer = AvroSerializer(schema_registry_client, schema_str, user_to_dict(asyncapi)) # Order of arguments is different from JSONSerializer and important. AttributeError: 'SchemaRegistryClient' object has no attribute 'strip'
       return avro_serializer
 
 
@@ -277,6 +392,15 @@ def produce_messages(producer, num_mesg, topic, serializer_deserializer_type='js
                 key =  mobile
 
                 if ( serializer_deserializer_type in ['avro', 'json'] ):
+
+                  if asyncapi:
+                    metadata = {"id": str(uuid4()),"time": str(datetime.datetime.now()), "type" : "testing", "subject": "SUBDOMAIN", "source": "SUBDOMAIN", "correlationId" : "testing"}
+
+                    data = {"fname" : fname, "lname" : lname, "email" : fname+"_"+lname+email, "principal" : fname+"@EXAMPLE.COM", "ipaddress" : ipaddress , "mobile" : int(mobile), "passport_make_date" : str(passport_make_date), "passport_expiry_date" : str(passport_expiry_date)}
+
+                    user = User(metadata=metadata, data=data)
+                  
+                  else:           
                     user = User(fname=fname,
                             lname=lname,
                             email=fname+'_'+lname+email,
@@ -285,8 +409,11 @@ def produce_messages(producer, num_mesg, topic, serializer_deserializer_type='js
                             passport_expiry_date=str(passport_expiry_date),
                             passport_make_date=str(passport_make_date),
                             mobile=int(mobile))
+                    
                 else:
+                    
                     user = {"fname" : fname, "lname" : lname, "email" : fname+"_"+lname+email, "principal" : fname+"@EXAMPLE.COM", "passport_make_date" : str(passport_make_date), "passport_expiry_date" : str(passport_expiry_date), "ipaddress" : ipaddress , "mobile" : int(mobile)}
+                    
                     user = str(user).encode()
 
                 producer.produce(topic=topic, value=user, key=str(key), on_delivery=delivery_report)
@@ -309,30 +436,36 @@ if __name__ == '__main__':
 
         print("\n")
         parser = argparse.ArgumentParser(description="Required Details For Kafka:")
-        parser.add_argument('-sdt', dest="serializer_deserializer_type", required=True, default='none', choices=['avro', 'json', 'none'],
-                            help="Serializer Type - avro, json or none")
         parser.add_argument('-t', dest="topic", default="mytopic",
                             help="Topic name - Brand new if serializer_deserializer_type is changed")
         parser.add_argument('-kb', dest="kafka_server", required=False, default=hostnames,
-                            help="Kafka and ZK Server")
+                            help="Kafka Broker with port - hostname:9092")
         parser.add_argument('-sr', dest="schema_registry", required=False, default=hostnames,
-                            help="Schema Registry Server")
+                            help="Schema Registry full URL - https://hostname:18081")
+        parser.add_argument('-cid', dest="clientID", default=None,
+                            help="Client ID having access to consume from topic.")  
+        parser.add_argument('-sdt', dest="serializer_deserializer_type", required=True, default='none',
+                            help="Serializer Deserializer Type - avro, json or none")                 
         parser.add_argument('-secure', dest="secure_cluster", required=False, action='store_true',
                             help="Kafka Cluster is Secure")
+        parser.add_argument('-asyncapi', dest="asyncapi_enabled", required=False, action='store_true',
+                            help="Kafka topics using asyncapi")             
 
 
         args = parser.parse_args()
 
-        serializer_deserializer_type = args.serializer_deserializer_type
         topic = args.topic
-        kafkaBrokerServer = args.kafka_server
-        schemaRegistryServer = args.schema_registry
-        secure_cluster = args.secure_cluster  
+        kafkaBroker = args.kafka_server
+        schemaRegistryUrl = args.schema_registry
+        secure_cluster = args.secure_cluster
+        asyncapi = args.asyncapi_enabled
+        serializer_deserializer_type = args.serializer_deserializer_type  
+        clientID = args.clientID if args.clientID else f"{topic}-consumer"
 
         if secure_cluster is None:
             secure_cluster = False
 
-        if schemaRegistryServer is None and serializer_deserializer_type in ['avro', 'json']:
+        if schemaRegistryUrl is None and serializer_deserializer_type in ['avro', 'json']:
             print("\nError: Schema registry URL is required for Avro or JSON deserialization.\n")
             parser.print_help()
             exit(1)
@@ -342,22 +475,13 @@ if __name__ == '__main__':
             exit(1)  
 
         # Security
+        load_dotenv()
         security_protocol = 'SSL'
-        ssl_ca_location = "/tmp/ca.crt"  # Root Cert
-        ssl_key_location = '/tmp/kafka.key' # Priavte Key
-        ssl_certificate_location = '/tmp/kafka.crt' # Response Cert - kafka-connect-lab01.nrsh13-hadoop.com
+        home_dir = os.getenv('HOME')
+        ssl_ca_location = f"{home_dir}/Downloads/ca.crt"  # Root Cert
+        ssl_key_location = f"{home_dir}/Downloads/kafka.key" # Priavte Key
+        ssl_certificate_location = f"{home_dir}/Downloads/kafka.crt" # Response Cert - kafka-connect-lab01.nrsh13-hadoop.com
         # Update Details End
-
-        if secure_cluster:
-            kafkaBrokerPort = 9093
-            schemaRegistryPort = 18081
-            SCHEMA_REGISTRY_URL = 'https://'+schemaRegistryServer+':'+str(schemaRegistryPort)
-        else:
-            kafkaBrokerPort = 9092
-            schemaRegistryPort = 8081
-            SCHEMA_REGISTRY_URL = 'http://'+schemaRegistryServer+':'+str(schemaRegistryPort)
-
-        kafkaBroker = kafkaBrokerServer+":"+str(kafkaBrokerPort)
 
         if secure_cluster:
             # Check if the cert files exist
@@ -368,36 +492,41 @@ if __name__ == '__main__':
                 print(f"\tResponse Cert: {ssl_certificate_location}\n\n")
                 sys.exit(1)  # Exiting the script        
 
-
         print ("""\nINFO: Kakfa Connection Details:
 
-        Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema.
+        Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv.
+        Instructions     :  while asyncApi usage, replace DOMAIN and SUBDOMAIN with your values.
         Kafka Broker     :  %s
         Schema Registry  :  %s
         Topic            :  %s
+        Client ID        :  %s
         Serializer Type  :  %s
-        Secure Cluster   :  %s """ %(kafkaBroker,SCHEMA_REGISTRY_URL,topic,serializer_deserializer_type,secure_cluster))
+        AsyncAPI Used    :  %s
+        Secure Cluster   :  %s """ %(kafkaBroker,schemaRegistryUrl,topic,clientID,serializer_deserializer_type,asyncapi,secure_cluster))
 
         # Test HOW Access is sorted based on certificate CN
         if secure_cluster:
             kafka_conf = {
                     "bootstrap.servers": kafkaBroker,
+                    "group.id": clientID,
                     "security.protocol": security_protocol,
                     "ssl.certificate.location": ssl_certificate_location,
                     "ssl.ca.location": ssl_ca_location,
                     "ssl.key.location": ssl_key_location,
             }
-            schema_registry_conf = {'url': SCHEMA_REGISTRY_URL,
+            schema_registry_conf = {
+                     'url': schemaRegistryUrl,
                      "ssl.certificate.location": ssl_certificate_location,
                      "ssl.ca.location": ssl_ca_location,
                      "ssl.key.location": ssl_key_location,
             }
         else:
             kafka_conf = {
-                    "bootstrap.servers": kafkaBroker
+                    "bootstrap.servers": kafkaBroker,
+                    "group.id": clientID
             }
             schema_registry_conf = {
-                    'url': SCHEMA_REGISTRY_URL
+                    'url': schemaRegistryUrl
             }
 
         print ("\nINFO: Creating connection obj for Admin Task")
