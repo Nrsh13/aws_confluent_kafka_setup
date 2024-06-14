@@ -8,6 +8,7 @@ import os, random, argparse
 import datetime
 from dateutil.relativedelta import relativedelta
 import struct, socket
+from dotenv import load_dotenv
 
 from confluent_kafka import admin
 from confluent_kafka import KafkaError
@@ -59,17 +60,17 @@ def dict_to_user(obj, ctx):
 
 
 # Get Schema for Value
-def get_schema(SCHEMA_REGISTRY_URL,topic):
+def get_schema(schemaRegistryUrl,topic):
         try:
                 subject = topic + '-value'
-                url="{}/subjects/{}/versions".format(SCHEMA_REGISTRY_URL, subject)
+                url="{}/subjects/{}/versions".format(schemaRegistryUrl, subject)
                 headers = { 'Content-Type': 'application/vnd.schemaregistry.v1+json',}
                 cert = (ssl_certificate_location,ssl_key_location)  # Make sure Cert is mentioned before Key
 
                 # Get Latest Version
                 print ("\nINFO: Making the API Call to SR")
                 versions_response = requests.get(
-                        url="{}/subjects/{}/versions".format(SCHEMA_REGISTRY_URL, subject),
+                        url="{}/subjects/{}/versions".format(schemaRegistryUrl, subject),
                         headers=headers,
                         cert=cert if secure_cluster else None, # SSLV3_ALERT_BAD_CERTIFICATE
                         verify=ssl_ca_location if secure_cluster else None # CERTIFICATE_VERIFY_FAILED - unable to get local issuer certificate
@@ -79,7 +80,7 @@ def get_schema(SCHEMA_REGISTRY_URL,topic):
 
                 # Get Value Schema
                 schema_response = requests.get(
-                        url="{}/subjects/{}/versions/{}".format(SCHEMA_REGISTRY_URL, subject, latest_version),
+                        url="{}/subjects/{}/versions/{}".format(schemaRegistryUrl, subject, latest_version),
                         headers=headers,
                         cert=cert if secure_cluster else None, # SSLV3_ALERT_BAD_CERTIFICATE
                         verify=ssl_ca_location if secure_cluster else None # CERTIFICATE_VERIFY_FAILED - unable to get local issuer certificate
@@ -95,7 +96,7 @@ def get_schema(SCHEMA_REGISTRY_URL,topic):
                 sys.exit(1)
 
 
-def deserialize_schema(SCHEMA_REGISTRY_URL, schema_str, serializer_deserializer_type = 'json'):
+def deserialize_schema(schemaRegistryUrl, schema_str, serializer_deserializer_type = 'json'):
 
     schema_registry_client = SchemaRegistryClient(schema_registry_conf)
 
@@ -162,27 +163,27 @@ if __name__ == '__main__':
 
         print("\n")
         parser = argparse.ArgumentParser(description="Required Details For Kafka:")
-        parser.add_argument('-sdt', dest="serializer_deserializer_type", required=True, default='none', choices=['avro', 'json', 'none'],
-                            help="Serializer Type - avro, json or none")
         parser.add_argument('-t', dest="topic", default="mytopic",
                             help="Topic name - Brand new if serializer_deserializer_type is changed")
         parser.add_argument('-kb', dest="kafka_server", required=False, default=hostnames,
-                            help="Kafka and ZK Server")
+                            help="Kafka Broker with port - hostname:9092")
         parser.add_argument('-sr', dest="schema_registry", required=False, default=hostnames,
-                            help="Schema Registry Server")
+                            help="Schema Registry full URL - https://hostname:18081")
+        parser.add_argument('-cid', dest="clientID", default=None,
+                            help="Client ID having access to consume from topic")  
+        parser.add_argument('-sdt', dest="serializer_deserializer_type", required=True, default='none',
+                            help="Serializer Deserializer Type - avro, json or none")                 
         parser.add_argument('-secure', dest="secure_cluster", required=False, action='store_true',
                             help="Kafka Cluster is Secure")
         parser.add_argument('-asyncapi', dest="asyncapi_enabled", required=False, action='store_true',
-                            help="Kafka topics using asyncapi")   
-        parser.add_argument('-cid', dest="clientID", default=None,
-                            help="Client ID having access to consume from topic")             
+                            help="Kafka topics using asyncapi")             
 
 
         args = parser.parse_args()
 
         topic = args.topic
-        kafkaBrokerServer = args.kafka_server
-        schemaRegistryServer = args.schema_registry
+        kafkaBroker = args.kafka_server
+        schemaRegistryUrl = args.schema_registry
         secure_cluster = args.secure_cluster
         asyncapi = args.asyncapi_enabled
         serializer_deserializer_type = args.serializer_deserializer_type  
@@ -191,7 +192,7 @@ if __name__ == '__main__':
         if secure_cluster is None:
             secure_cluster = False
 
-        if schemaRegistryServer is None and serializer_deserializer_type in ['avro', 'json']:
+        if schemaRegistryUrl is None and serializer_deserializer_type in ['avro', 'json']:
             print("\nError: Schema registry URL is required for Avro or JSON deserialization.\n")
             parser.print_help()
             exit(1)
@@ -200,22 +201,13 @@ if __name__ == '__main__':
             parser.print_help()
             exit(1)  
 
-        if secure_cluster:
-            kafkaBrokerPort = 9093
-            schemaRegistryPort = 18081
-            SCHEMA_REGISTRY_URL = 'https://'+schemaRegistryServer+':'+str(schemaRegistryPort)
-        else:
-            kafkaBrokerPort = 9092
-            schemaRegistryPort = 8081
-            SCHEMA_REGISTRY_URL = 'http://'+schemaRegistryServer+':'+str(schemaRegistryPort)
-
-        kafkaBroker = kafkaBrokerServer+":"+str(kafkaBrokerPort)
-
         # Security
+        load_dotenv()
         security_protocol = 'SSL'
-        ssl_ca_location = "/tmp/ca.crt"  # Root Cert
-        ssl_key_location = '/tmp/kafka.key' # Priavte Key
-        ssl_certificate_location = '/tmp/kafka.crt' # Response Cert - kafka-connect-lab01.nrsh13-hadoop.com
+        home_dir = os.getenv('HOME')
+        ssl_ca_location = f"{home_dir}/Downloads/ca.crt"  # Root Cert
+        ssl_key_location = f"{home_dir}/Downloads/kafka.key" # Priavte Key
+        ssl_certificate_location = f"{home_dir}/Downloads/kafka.crt" # Response Cert - kafka-connect-lab01.nrsh13-hadoop.com
         # Update Details End
 
         if secure_cluster:
@@ -229,13 +221,14 @@ if __name__ == '__main__':
 
         print ("""\nINFO: Kakfa Connection Details:
 
-        Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema.
+        Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv.
         Kafka Broker     :  %s
         Schema Registry  :  %s
         Topic            :  %s
+        Client ID        :  %s
         Serializer Type  :  %s
         AsyncAPI Used    :  %s
-        Secure Cluster   :  %s """ %(kafkaBroker,SCHEMA_REGISTRY_URL,topic,serializer_deserializer_type,asyncapi,secure_cluster))
+        Secure Cluster   :  %s """ %(kafkaBroker,schemaRegistryUrl,topic,clientID,serializer_deserializer_type,asyncapi,secure_cluster))
 
         # Test HOW Access is sorted based on certificate CN
         if secure_cluster:
@@ -247,7 +240,8 @@ if __name__ == '__main__':
                     "ssl.ca.location": ssl_ca_location,
                     "ssl.key.location": ssl_key_location,
             }
-            schema_registry_conf = {'url': SCHEMA_REGISTRY_URL,
+            schema_registry_conf = {
+                     'url': schemaRegistryUrl,
                      "ssl.certificate.location": ssl_certificate_location,
                      "ssl.ca.location": ssl_ca_location,
                      "ssl.key.location": ssl_key_location,
@@ -258,19 +252,19 @@ if __name__ == '__main__':
                     "group.id": clientID
             }
             schema_registry_conf = {
-                    'url': SCHEMA_REGISTRY_URL
+                    'url': schemaRegistryUrl
             }
 
         consumer_conf = kafka_conf
 
         if ( serializer_deserializer_type == 'avro' ):
             print ("\nINFO: Get %s Schema for Topic %s" %(serializer_deserializer_type, topic))
-            schema_str = get_schema(SCHEMA_REGISTRY_URL,topic)
+            schema_str = get_schema(schemaRegistryUrl,topic)
             print ("\nINFO: Deserialize Schema for Topic %s" %(topic))
             avro_deserializer = deserialize_schema(schema_registry_conf, schema_str, serializer_deserializer_type)
         elif ( serializer_deserializer_type == 'json' ):
             print ("\nINFO: Get %s Schema for Topic %s" %(serializer_deserializer_type, topic))
-            schema_str = get_schema(SCHEMA_REGISTRY_URL,topic)
+            schema_str = get_schema(schemaRegistryUrl,topic)
             print ("\nINFO: Deserialize Schema for Topic %s" %(topic))
             json_deserializer = deserialize_schema(schema_registry_conf, schema_str, serializer_deserializer_type)
         else:

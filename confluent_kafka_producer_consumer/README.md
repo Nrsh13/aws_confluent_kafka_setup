@@ -10,7 +10,7 @@ This project contains a Confluent Kafka Python Producer and Consumer code. This 
 - Below packages are required which will already be installed. Install below if want to use this code somewhere else.
 ```
     yum install -y python39
-    python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema
+    python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv
 ```
 - For Secure Kafka Cluster, Make sure security details are updated (location of the certs). NO CHANGES NEED IF USING ANY OF THE KAFKA BROKER TO USE THIS CODE.
 
