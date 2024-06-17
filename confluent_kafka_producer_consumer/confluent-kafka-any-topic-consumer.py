@@ -169,14 +169,16 @@ if __name__ == '__main__':
                             help="Kafka Broker with port - hostname:9092")
         parser.add_argument('-sr', dest="schema_registry", required=False, default=hostnames,
                             help="Schema Registry full URL - https://hostname:18081")
-        parser.add_argument('-cid', dest="clientID", default=None,
-                            help="Client ID having access to consume from topic")  
         parser.add_argument('-sdt', dest="serializer_deserializer_type", required=True, default='none',
-                            help="Serializer Deserializer Type - avro, json or none")                 
+                            help="Serializer Deserializer Type - avro, json or none")  
+        parser.add_argument('-cid', dest="clientID", default=None,
+                            help="consumer only: Client ID having access to consume from topic.")          
+        parser.add_argument('-n', dest="num_mesg", required=False, default=5,
+                            help="producer only: Number of messages to produce")             
         parser.add_argument('-secure', dest="secure_cluster", required=False, action='store_true',
                             help="Kafka Cluster is Secure")
         parser.add_argument('-asyncapi', dest="asyncapi_enabled", required=False, action='store_true',
-                            help="Kafka topics using asyncapi")             
+                            help="Kafka topics using asyncapi")         
 
 
         args = parser.parse_args()

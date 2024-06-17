@@ -79,10 +79,10 @@ def delivery_report(err, msg):
 
 
 # Get Schema for Value
-def get_schema(SCHEMA_REGISTRY_URL,topic):
+def get_schema(schemaRegistryUrl,topic):
         try:
                 subject = topic + '-value'
-                url="{}/subjects/{}/versions".format(SCHEMA_REGISTRY_URL, subject)
+                url="{}/subjects/{}/versions".format(schemaRegistryUrl, subject)
                 headers = { 'Content-Type': 'application/vnd.schemaregistry.v1+json',}
                 cert = (ssl_certificate_location,ssl_key_location) # Make sure Cert is mentioned before Key
 
@@ -101,7 +101,7 @@ def get_schema(SCHEMA_REGISTRY_URL,topic):
 
                 # Get Value Schema
                 schema_response = requests.get(
-                        url="{}/subjects/{}/versions/{}".format(SCHEMA_REGISTRY_URL, subject, latest_version),
+                        url="{}/subjects/{}/versions/{}".format(schemaRegistryUrl, subject, latest_version),
                         headers=headers,
                         cert=cert, # SSLV3_ALERT_BAD_CERTIFICATE
                         verify=ssl_ca_location # CERTIFICATE_VERIFY_FAILED - unable to get local issuer certificate
@@ -117,7 +117,7 @@ def get_schema(SCHEMA_REGISTRY_URL,topic):
                 return 'none'
 
 
-def serialize_schema(SCHEMA_REGISTRY_URL, schema_str, serializer_deserializer_type = 'json'):
+def serialize_schema(schemaRegistryUrl, schema_str, serializer_deserializer_type = 'json'):
 
     # Use below schemas when Schema does not exists in SR.
     if ( serializer_deserializer_type == 'json' and schema_str == 'none' ):
@@ -322,18 +322,30 @@ def serialize_schema(SCHEMA_REGISTRY_URL, schema_str, serializer_deserializer_ty
 """
 
     else:
+       # if Schema Found in SR, use it as it is.
        schema_str = schema_str
 
     schema_registry_client = SchemaRegistryClient(schema_registry_conf)
 
     if ( serializer_deserializer_type == 'json' ):
-      json_serializer = JSONSerializer(schema_str, schema_registry_client, user_to_dict(asyncapi))
+      # Producer can write to SR if it has permissions. Generally with asyncAPI, Schema is taken care at Topic creation level only.
+      # To Avoid Producer writing the schema to SR, set auto.register.schemas to False. NO Permissions in Enterprise Kafka to write the schema while using asyncapi.
+      if asyncapi:
+        print ("\nINFO: Producer is disabled to write schema to SR using auto.register.schemas as you are using AsyncAPI.")
+        pro_conf = {"auto.register.schemas": False}
+        json_serializer = AvroSerializer(schema_str, schema_registry_client, user_to_dict(asyncapi), conf=pro_conf)          
+      else:
+        json_serializer = JSONSerializer(schema_str, schema_registry_client, user_to_dict(asyncapi))
       return json_serializer
     # For Avro
-    else: # To Avoid Producer writing the schema to SR. set below. NO Permissions in Enterprise Kafka to write the schema.
-      #pro_conf = {"auto.register.schemas": False}
-      #avro_serializer = AvroSerializer(schema_registry_client, schema_str, user_to_dict, conf=pro_conf)
-      avro_serializer = AvroSerializer(schema_registry_client, schema_str, user_to_dict(asyncapi)) # Order of arguments is different from JSONSerializer and important. AttributeError: 'SchemaRegistryClient' object has no attribute 'strip'
+    else: 
+      # To Avoid Producer writing the schema to SR. set below. NO Permissions in Enterprise Kafka to write the schema while using asyncapi.
+      if asyncapi:
+        print ("\nINFO: Producer is disabled to write schema to SR using auto.register.schemas as you are using AsyncAPI.")
+        pro_conf = {"auto.register.schemas": False}
+        avro_serializer = AvroSerializer(schema_registry_client, schema_str, user_to_dict(asyncapi), conf=pro_conf)
+      else:
+        avro_serializer = AvroSerializer(schema_registry_client, schema_str, user_to_dict(asyncapi)) # Order of arguments is different from JSONSerializer and important. AttributeError: 'SchemaRegistryClient' object has no attribute 'strip'
       return avro_serializer
 
 
@@ -442,10 +454,12 @@ if __name__ == '__main__':
                             help="Kafka Broker with port - hostname:9092")
         parser.add_argument('-sr', dest="schema_registry", required=False, default=hostnames,
                             help="Schema Registry full URL - https://hostname:18081")
-        parser.add_argument('-cid', dest="clientID", default=None,
-                            help="Client ID having access to consume from topic.")  
         parser.add_argument('-sdt', dest="serializer_deserializer_type", required=True, default='none',
-                            help="Serializer Deserializer Type - avro, json or none")                 
+                            help="Serializer Deserializer Type - avro, json or none")  
+        parser.add_argument('-cid', dest="clientID", default=None,
+                            help="consumer only: Client ID having access to consume from topic.")          
+        parser.add_argument('-n', dest="num_mesg", required=False, default=5,
+                            help="producer only: Number of messages to produce")             
         parser.add_argument('-secure', dest="secure_cluster", required=False, action='store_true',
                             help="Kafka Cluster is Secure")
         parser.add_argument('-asyncapi', dest="asyncapi_enabled", required=False, action='store_true',
@@ -495,7 +509,7 @@ if __name__ == '__main__':
         print ("""\nINFO: Kakfa Connection Details:
 
         Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv.
-        Instructions     :  while asyncApi usage, replace DOMAIN and SUBDOMAIN with your values.
+        Instructions     :  while asyncApi usage, you might need to replace DOMAIN and SUBDOMAIN using in this script with your values.
         Kafka Broker     :  %s
         Schema Registry  :  %s
         Topic            :  %s
@@ -539,13 +553,13 @@ if __name__ == '__main__':
 
         if ( serializer_deserializer_type == 'avro' ):
             print ("\nINFO: Get %s Schema for Topic %s" %(serializer_deserializer_type, topic))
-            schema_str = get_schema(SCHEMA_REGISTRY_URL,topic)
+            schema_str = get_schema(schemaRegistryUrl,topic)
             print ("\nINFO: Set up %s Schema for Topic %s" %(serializer_deserializer_type, topic))
             avro_serializer = serialize_schema(schema_registry_conf, schema_str, serializer_deserializer_type)
         elif ( serializer_deserializer_type == 'json' ):
             print ("\nINFO: Get %s Schema for Topic %s" %(serializer_deserializer_type, topic))
-            print(SCHEMA_REGISTRY_URL)
-            schema_str = get_schema(SCHEMA_REGISTRY_URL,topic)
+            print(schemaRegistryUrl)
+            schema_str = get_schema(schemaRegistryUrl,topic)
             print ("\nINFO: Set up %s Schema for Topic %s" %(serializer_deserializer_type, topic))
             json_serializer = serialize_schema(schema_registry_conf, schema_str, serializer_deserializer_type)
         else:
@@ -564,4 +578,4 @@ if __name__ == '__main__':
         else:
             producer = Producer(producer_conf)
 
-        produce_messages(producer,int(num_mesg),topic, serializer_deserializer_type)
+        produce_messages(producer,int(int(args.num_mesg)),topic, serializer_deserializer_type)
