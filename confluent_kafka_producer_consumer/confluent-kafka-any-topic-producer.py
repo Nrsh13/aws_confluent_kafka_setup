@@ -20,6 +20,8 @@ from confluent_kafka.schema_registry.avro import AvroSerializer
 from confluent_kafka.schema_registry.json_schema import JSONSerializer
 from confluent_kafka.schema_registry import SchemaRegistryClient
 
+# Global variable declaration
+asyncapi = False
 
 class User(object):
     """
@@ -42,7 +44,7 @@ class User(object):
             self.mobile = kwargs.get('mobile')
 
 
-def user_to_dict(user, ctx, asyncapi):
+def user_to_dict(user, ctx):
     """
     Returns a dict representation of a User instance for serialization.
     Returns:
@@ -333,9 +335,9 @@ def serialize_schema(schemaRegistryUrl, schema_str, serializer_deserializer_type
       if asyncapi:
         print ("\nINFO: Producer is disabled to write schema to SR using auto.register.schemas as you are using AsyncAPI.")
         pro_conf = {"auto.register.schemas": False}
-        json_serializer = AvroSerializer(schema_str, schema_registry_client, user_to_dict(asyncapi), conf=pro_conf)          
+        json_serializer = AvroSerializer(schema_str, schema_registry_client, user_to_dict, conf=pro_conf)          
       else:
-        json_serializer = JSONSerializer(schema_str, schema_registry_client, user_to_dict(asyncapi))
+        json_serializer = JSONSerializer(schema_str, schema_registry_client, user_to_dict)
       return json_serializer
     # For Avro
     else: 
@@ -343,9 +345,9 @@ def serialize_schema(schemaRegistryUrl, schema_str, serializer_deserializer_type
       if asyncapi:
         print ("\nINFO: Producer is disabled to write schema to SR using auto.register.schemas as you are using AsyncAPI.")
         pro_conf = {"auto.register.schemas": False}
-        avro_serializer = AvroSerializer(schema_registry_client, schema_str, user_to_dict(asyncapi), conf=pro_conf)
+        avro_serializer = AvroSerializer(schema_registry_client, schema_str, user_to_dict, conf=pro_conf)
       else:
-        avro_serializer = AvroSerializer(schema_registry_client, schema_str, user_to_dict(asyncapi)) # Order of arguments is different from JSONSerializer and important. AttributeError: 'SchemaRegistryClient' object has no attribute 'strip'
+        avro_serializer = AvroSerializer(schema_registry_client, schema_str, user_to_dict) # Order of arguments is different from JSONSerializer and important. AttributeError: 'SchemaRegistryClient' object has no attribute 'strip'
       return avro_serializer
 
 
@@ -456,8 +458,9 @@ if __name__ == '__main__':
                             help="Schema Registry full URL - https://hostname:18081")
         parser.add_argument('-sdt', dest="serializer_deserializer_type", required=True, default='none',
                             help="Serializer Deserializer Type - avro, json or none")  
-        parser.add_argument('-cid', dest="clientID", default=None,
-                            help="consumer only: Client ID having access to consume from topic.")          
+        ## client ID not required for Producers.
+        # parser.add_argument('-cid', dest="clientID", default=None,
+        #                     help="consumer only: Client ID having access to consume from topic.")          
         parser.add_argument('-n', dest="num_mesg", required=False, default=5,
                             help="producer only: Number of messages to produce")             
         parser.add_argument('-secure', dest="secure_cluster", required=False, action='store_true',
@@ -474,7 +477,8 @@ if __name__ == '__main__':
         secure_cluster = args.secure_cluster
         asyncapi = args.asyncapi_enabled
         serializer_deserializer_type = args.serializer_deserializer_type  
-        clientID = args.clientID if args.clientID else f"{topic}-consumer"
+        #clientID = args.clientID if args.clientID else f"{topic}-consumer"
+        clientID = getattr(args, 'clientID', None) or f"{topic}"
 
         if secure_cluster is None:
             secure_cluster = False
@@ -492,7 +496,7 @@ if __name__ == '__main__':
         load_dotenv()
         security_protocol = 'SSL'
         home_dir = os.getenv('HOME')
-        ssl_ca_location = f"{home_dir}/Downloads/ca.crt"  # Root Cert
+        ssl_ca_location = f"{home_dir}/Downloads/cabundle.crt"  # Root Cert
         ssl_key_location = f"{home_dir}/Downloads/kafka.key" # Priavte Key
         ssl_certificate_location = f"{home_dir}/Downloads/kafka.crt" # Response Cert - kafka-connect-lab01.nrsh13-hadoop.com
         # Update Details End
@@ -522,7 +526,7 @@ if __name__ == '__main__':
         if secure_cluster:
             kafka_conf = {
                     "bootstrap.servers": kafkaBroker,
-                    "group.id": clientID,
+                    # "group.id": clientID, # Not required for Producers
                     "security.protocol": security_protocol,
                     "ssl.certificate.location": ssl_certificate_location,
                     "ssl.ca.location": ssl_ca_location,
@@ -578,4 +582,4 @@ if __name__ == '__main__':
         else:
             producer = Producer(producer_conf)
 
-        produce_messages(producer,int(int(args.num_mesg)),topic, serializer_deserializer_type)
+        produce_messages(producer,int(args.num_mesg),topic, serializer_deserializer_type)

@@ -20,21 +20,29 @@ from confluent_kafka.schema_registry.avro import AvroDeserializer
 from confluent_kafka.schema_registry.json_schema import JSONDeserializer
 from confluent_kafka.schema_registry import SchemaRegistryClient
 
+# Global variable declaration
+asyncapi = False
 
 class User(object):
     """
     Required when we used SerializingProducer|DeserializingConsumer instead of Producer|Consumer Method.
     SerializingProducer|DeserializingProducer - includes registering|deregistring Schema in SR
     """
-    def __init__(self, fname, lname, principal, email, ipaddress, passport_expiry_date, passport_make_date, mobile):
-        self.fname = fname
-        self.lname = lname
-        self.principal = principal
-        self.email = email
-        self.ipaddress = ipaddress
-        self.passport_expiry_date = passport_expiry_date
-        self.passport_make_date = passport_make_date
-        self.mobile = mobile
+    ## In producer, used a different way for the same.
+    if asyncapi:
+        def __init__(self, metadata, data):
+            self.metadata = metadata
+            self.data = data
+    else:
+        def __init__(self, fname, lname, principal, email, ipaddress, passport_expiry_date, passport_make_date, mobile):
+            self.fname = fname
+            self.lname = lname
+            self.principal = principal
+            self.email = email
+            self.ipaddress = ipaddress
+            self.passport_expiry_date = passport_expiry_date
+            self.passport_make_date = passport_make_date
+            self.mobile = mobile
 
 
 def dict_to_user(obj, ctx):
@@ -189,7 +197,7 @@ if __name__ == '__main__':
         secure_cluster = args.secure_cluster
         asyncapi = args.asyncapi_enabled
         serializer_deserializer_type = args.serializer_deserializer_type  
-        clientID = args.clientID if args.clientID else f"{topic}-consumer"
+        clientID = getattr(args, 'clientID', None) or f"{topic}-consumer"
 
         if secure_cluster is None:
             secure_cluster = False
