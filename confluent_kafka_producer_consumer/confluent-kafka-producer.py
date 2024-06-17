@@ -509,17 +509,16 @@ if __name__ == '__main__':
                 print(f"\tResponse Cert: {ssl_certificate_location}\n\n")
                 sys.exit(1)  # Exiting the script        
 
-        print ("""\nINFO: Kakfa Connection Details:
+        print ("""INFO: Kakfa Connection Details:
                
-        Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv.
-        Instructions     :  while asyncApi usage, you might need to replace DOMAIN and SUBDOMAIN using in this script with your values.
-        Kafka Broker     :  %s
-        Schema Registry  :  %s
-        Topic            :  %s
-        Client ID        :  %s
         Serializer Type  :  %s
         AsyncAPI Used    :  %s
-        Secure Cluster   :  %s""" %(kafkaBroker,schemaRegistryUrl,topic,clientID,serializer_deserializer_type,asyncapi,secure_cluster))
+        Secure Cluster   :  %s
+        Topic            :  %s
+        Client ID        :  %s               
+        Kafka Broker     :  %s
+        Schema Registry  :  %s               
+        Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv.""" %(serializer_deserializer_type,asyncapi,secure_cluster,topic,clientID,kafkaBroker,schemaRegistryUrl))
         
         # Test HOW Access is sorted based on certificate CN
         if secure_cluster:

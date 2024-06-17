@@ -2,11 +2,11 @@
 
 - Just run below and it will display all required options:
 ```
-python confluent-kafka-any-topic-consumer.py -h
+python confluent-kafka-producer.py -h
 ``` 
 
 - Required Permissions on Schema Registry Subject, Topic and Consumer Group is required. 
-	- if you have used, confluent_kafka_setup_secure folder for the setup, these permissions are already setu.
+	- if you have used, confluent_kafka_setup_secure folder for the setup, these permissions are already setup.
 	- Refer aws_confluent_kafka_setup/confluent_kafka_setup_secure/all.yml (last section - set_permissions) and aws_confluent_kafka_setup/confluent_kafka_setup_secure/scripts_and_others/setup-initial-permissions.sh
 
 Below will Provide full permissions to SR, Group, Topic to kafka-connect-lab01.nrsh13-hadoop.com

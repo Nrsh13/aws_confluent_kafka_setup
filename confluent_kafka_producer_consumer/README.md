@@ -2,7 +2,7 @@
 
 ## Description
 
-This project contains a Confluent Kafka Python Producer and Consumer code. This will work for Secure and Nonsecure Kafka Cluster.
+This project contains Confluent Kafka Python Producer and Consumer code. This will work for Secure and Nonsecure Kafka Cluster based on the arguments passed.
 
 ## Pre-requisites
 
@@ -20,65 +20,46 @@ This project contains a Confluent Kafka Python Producer and Consumer code. This 
 ```
 # Help for Producer
 
-[root@ansible ~]# python3.9 /tmp/confluent-kafka-any-topic-producer.py -h
+[root@ansible ~]# python confluent-kafka-producer.py -h
 
 
-usage: confluent-kafka-any-topic-producer.py [-h] [-t TOPIC] [-kb KAFKA_SERVER] [-sr SCHEMA_REGISTRY] [-cid CLIENTID] -sdt SERIALIZER_DESERIALIZER_TYPE [-secure] [-asyncapi]
+usage: confluent-kafka-producer.py [-h] [-t TOPIC] [-kb KAFKA_SERVER] [-sr SCHEMA_REGISTRY] -sdt SERIALIZER_DESERIALIZER_TYPE [-n NUM_MESG]
+                                   [-secure] [-asyncapi]
 
-Required Details For Kafka:
-
-options:
-  -h, --help            show this help message and exit
-  -t TOPIC              Topic name - Brand new if serializer_deserializer_type is changed
-  -kb KAFKA_SERVER      Kafka Broker with port - hostname:9092
-  -sr SCHEMA_REGISTRY   Schema Registry full URL - https://hostname:18081
-  -cid CLIENTID         Client ID having access to consume from topic
-  -sdt SERIALIZER_DESERIALIZER_TYPE
-                        Serializer Deserializer Type - avro, json or none
-  -secure               Kafka Cluster is Secure
-  -asyncapi             Kafka topics using asyncapi
+Required Details below: eq. python confluent-kafka-producer.py -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -sdt avro
+-n 10 -secure -asyncapi
 
 # Help for Consumer
 
-[root@ansible ~]#  python3.9 /tmp/confluent-kafka-any-topic-consumer.py -h
+[root@ansible ~]#  python confluent-kafka-consumer.py -h
 
-usage: confluent-kafka-any-topic-consumer.py [-h] [-t TOPIC] [-kb KAFKA_SERVER] [-sr SCHEMA_REGISTRY] [-cid CLIENTID] -sdt SERIALIZER_DESERIALIZER_TYPE [-secure] [-asyncapi]
 
-Required Details For Kafka:
+usage: confluent-kafka-consumer.py [-h] [-t TOPIC] [-kb KAFKA_SERVER] [-sr SCHEMA_REGISTRY] -sdt SERIALIZER_DESERIALIZER_TYPE
+                                   [-cid CLIENTID] [-n NUM_MESG] [-secure] [-asyncapi]
 
-options:
-  -h, --help            show this help message and exit
-  -t TOPIC              Topic name - Brand new if serializer_deserializer_type is changed
-  -kb KAFKA_SERVER      Kafka Broker with port - hostname:9092
-  -sr SCHEMA_REGISTRY   Schema Registry full URL - https://hostname:18081
-  -cid CLIENTID         Client ID having access to consume from topic
-  -sdt SERIALIZER_DESERIALIZER_TYPE
-                        Serializer Deserializer Type - avro, json or none
-  -secure               Kafka Cluster is Secure
-  -asyncapi             Kafka topics using asyncapi
+for eq.: python confluent-kafka-consumer.py -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -sdt avro -cid mytopic-
+consumer -secure -asyncapi
 ```
 
 - Running Producer
 ```
-Avro: python3.9 /tmp/confluent-kafka-any-topic-producer.py -p avro -t mytopic_avro -n 5 -s ansi-lab01-01.nrsh13-hadoop.com -secure False
-JSON: python3.9 /tmp/confluent-kafka-any-topic-producer.py -p json -t mytopic_json -n 5 -s ansi-lab01-01.nrsh13-hadoop.com -secure False
-None: python3.9 /tmp/confluent-kafka-any-topic-producer.py -p none -t mytopic -n 5 -s ansi-lab01-01.nrsh13-hadoop.com -secure False
+Avro|json|none: python confluent-kafka-producer.py -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -sdt avro|json|non
+-n 10 -secure -asyncapi
 
-[root@ansible ~]# python3.9 /tmp/confluent-kafka-any-topic-producer.py -p json -t mytopic -n 5 -s ansi-lab01-01.nrsh13-hadoop.com -secure False
-
-
-        Dependencies - python3.9 -m pip install confluent-kafka[avro] confluent-kafka boto3 jsonschema
-
-        ALERT: This Script assumes All Services are running on same Machine ansi-lab01-01.nrsh13-hadoop.com !!
-        if NOT, Update the required Details in Main() section of the Script.
+[root@ansible ~]# python confluent-kafka-producer.py -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -sdt avro
+-n 10 -secure -asyncapi
 
 INFO: Kakfa Connection Details:
+               
+        Serializer Type  :  avro
+        AsyncAPI Used    :  True
+        Secure Cluster   :  True
+        Topic            :  mytopic
+        Client ID        :  mytopic-consumer               
+        Kafka Broker     :  mykafkabroker01:9093
+        Schema Registry  :  myschemaregistry01:18081               
+        Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv.
 
-        Kafka Broker     :  ansi-lab01-01.nrsh13-hadoop.com:9092
-        Zookeeper        :  ansi-lab01-01.nrsh13-hadoop.com:2181
-        Topic            :  mytopic_json
-        Serializer Type  :  json
-        Secure Cluster   :  False
 
 INFO: Creating connection obj for Admin Task
 
@@ -112,25 +93,23 @@ INFO: Producing Messages -
 
 - Running Consumer
 ```
-Avro: python3.9 /tmp/confluent-kafka-any-topic-consumer.py -p avro -t mytopic_avro -s ansi-lab01-01.nrsh13-hadoop.com -secure False
-JSON: python3.9 /tmp/confluent-kafka-any-topic-consumer.py -p json -t mytopic_json -s ansi-lab01-01.nrsh13-hadoop.com -secure False
-None: python3.9 /tmp/confluent-kafka-any-topic-consumer.py -p none -t mytopic -s ansi-lab01-01.nrsh13-hadoop.com -secure False
+Avro|Json|None: python confluent-kafka-consumer.py -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -sdt avro|json|none -cid mytopic-
+consumer -secure -asyncapi
 
-[root@ansible ~]# python3.9 /tmp/confluent-kafka-any-topic-consumer.py -p json -t mytopic_json -s ansi-lab01-01.nrsh13-hadoop.com -secure False
-
-
-        Dependencies - python3.9 -m pip install confluent-kafka[avro] confluent-kafka boto3 jsonschema
-
-        ALERT: This Script assumes All Services are running on same Machine ansi-lab01-01.nrsh13-hadoop.com !!
-        if NOT, Update the required Details in Main() section of the Script.
+[root@ansible ~]# python confluent-kafka-consumer.py -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -sdt avro -cid mytopic-
+consumer -secure -asyncapi
 
 INFO: Kakfa Connection Details:
+               
+        Serializer Type  :  avro
+        AsyncAPI Used    :  True
+        Secure Cluster   :  True
+        Topic            :  mytopic
+        Client ID        :  mytopic-consumer               
+        Kafka Broker     :  mykafkabroker01:9093
+        Schema Registry  :  myschemaregistry01:18081               
+        Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv.
 
-        Kafka Broker     :  ansi-lab01-01.nrsh13-hadoop.com:9092
-        Zookeeper        :  ansi-lab01-01.nrsh13-hadoop.com:2181
-        Topic            :  mytopic_json
-        Serializer Type  :  json
-        Secure Cluster   :  False
 
 INFO: Get json Schema for Topic mytopic_json
 
