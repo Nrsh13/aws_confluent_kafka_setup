@@ -28,7 +28,7 @@ class User(object):
     Required when we used SerializingProducer|DeserializingConsumer instead of Producer|Consumer Method.
     SerializingProducer|DeserializingProducer - includes registering|deregistring Schema in SR
     """
-
+    ## In consumer, used a different way for the same.
     def __init__(self, metadata=None, data=None, **kwargs):
         if asyncapi:
             self.metadata = metadata
@@ -511,7 +511,8 @@ if __name__ == '__main__':
                 sys.exit(1)  # Exiting the script        
 
         print ("""\nINFO: Kakfa Connection Details:
-
+               
+        eq. command      :  python scriptName.py -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -sdt avro -n 10 -secure -asyncapi
         Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv.
         Instructions     :  while asyncApi usage, you might need to replace DOMAIN and SUBDOMAIN using in this script with your values.
         Kafka Broker     :  %s

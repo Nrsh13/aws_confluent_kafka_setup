@@ -230,7 +230,8 @@ if __name__ == '__main__':
                 sys.exit(1)  # Exiting the script        
 
         print ("""\nINFO: Kakfa Connection Details:
-
+               
+        eq. command      :  python scriptName.py -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -sdt avro -cid mytopic-consumer 10 -secure -asyncapi
         Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv.
         Kafka Broker     :  %s
         Schema Registry  :  %s
