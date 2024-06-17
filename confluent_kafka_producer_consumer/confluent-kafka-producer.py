@@ -28,7 +28,6 @@ class User(object):
     Required when we used SerializingProducer|DeserializingConsumer instead of Producer|Consumer Method.
     SerializingProducer|DeserializingProducer - includes registering|deregistring Schema in SR
     """
-    ## In consumer, used a different way for the same.
     def __init__(self, metadata=None, data=None, **kwargs):
         if asyncapi:
             self.metadata = metadata
@@ -449,7 +448,7 @@ if __name__ == '__main__':
         hostnames = socket.gethostname()
 
         print("\n")
-        parser = argparse.ArgumentParser(description="Required Details For Kafka:")
+        parser = argparse.ArgumentParser(description="for eq.: python %s -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -sdt avro -n 10 -secure -asyncapi""" %(sys.argv[0]))
         parser.add_argument('-t', dest="topic", default="mytopic",
                             help="Topic name - Brand new if serializer_deserializer_type is changed")
         parser.add_argument('-kb', dest="kafka_server", required=False, default=hostnames,
@@ -512,7 +511,6 @@ if __name__ == '__main__':
 
         print ("""\nINFO: Kakfa Connection Details:
                
-        eq. command      :  python scriptName.py -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -sdt avro -n 10 -secure -asyncapi
         Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv.
         Instructions     :  while asyncApi usage, you might need to replace DOMAIN and SUBDOMAIN using in this script with your values.
         Kafka Broker     :  %s
@@ -521,8 +519,8 @@ if __name__ == '__main__':
         Client ID        :  %s
         Serializer Type  :  %s
         AsyncAPI Used    :  %s
-        Secure Cluster   :  %s """ %(kafkaBroker,schemaRegistryUrl,topic,clientID,serializer_deserializer_type,asyncapi,secure_cluster))
-
+        Secure Cluster   :  %s""" %(kafkaBroker,schemaRegistryUrl,topic,clientID,serializer_deserializer_type,asyncapi,secure_cluster))
+        
         # Test HOW Access is sorted based on certificate CN
         if secure_cluster:
             kafka_conf = {

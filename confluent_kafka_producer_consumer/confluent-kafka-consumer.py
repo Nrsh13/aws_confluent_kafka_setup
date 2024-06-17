@@ -28,22 +28,19 @@ class User(object):
     Required when we used SerializingProducer|DeserializingConsumer instead of Producer|Consumer Method.
     SerializingProducer|DeserializingProducer - includes registering|deregistring Schema in SR
     """
-    ## In producer, used a different way for the same.
-    if asyncapi:
-        def __init__(self, metadata, data):
+    def __init__(self, metadata=None, data=None, **kwargs):
+        if asyncapi:
             self.metadata = metadata
             self.data = data
-    else:
-        def __init__(self, fname, lname, principal, email, ipaddress, passport_expiry_date, passport_make_date, mobile):
-            self.fname = fname
-            self.lname = lname
-            self.principal = principal
-            self.email = email
-            self.ipaddress = ipaddress
-            self.passport_expiry_date = passport_expiry_date
-            self.passport_make_date = passport_make_date
-            self.mobile = mobile
-
+        else:
+            self.fname = kwargs.get('fname')
+            self.lname = kwargs.get('lname')
+            self.principal = kwargs.get('principal')
+            self.email = kwargs.get('email')
+            self.ipaddress = kwargs.get('ipaddress')
+            self.passport_expiry_date = kwargs.get('passport_expiry_date')
+            self.passport_make_date = kwargs.get('passport_make_date')
+            self.mobile = kwargs.get('mobile')
 
 def dict_to_user(obj, ctx):
     """
@@ -170,7 +167,7 @@ if __name__ == '__main__':
         hostnames = socket.gethostname()
 
         print("\n")
-        parser = argparse.ArgumentParser(description="Required Details For Kafka:")
+        parser = argparse.ArgumentParser(description="for eq.: python %s -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -sdt avro -cid mytopic-consumer -secure -asyncapi""" %(sys.argv[0]))
         parser.add_argument('-t', dest="topic", default="mytopic",
                             help="Topic name - Brand new if serializer_deserializer_type is changed")
         parser.add_argument('-kb', dest="kafka_server", required=False, default=hostnames,
@@ -215,7 +212,7 @@ if __name__ == '__main__':
         load_dotenv()
         security_protocol = 'SSL'
         home_dir = os.getenv('HOME')
-        ssl_ca_location = f"{home_dir}/Downloads/ca.crt"  # Root Cert
+        ssl_ca_location = f"{home_dir}/Downloads/cabundle.crt"  # Root Cert
         ssl_key_location = f"{home_dir}/Downloads/kafka.key" # Priavte Key
         ssl_certificate_location = f"{home_dir}/Downloads/kafka.crt" # Response Cert - kafka-connect-lab01.nrsh13-hadoop.com
         # Update Details End
@@ -231,7 +228,6 @@ if __name__ == '__main__':
 
         print ("""\nINFO: Kakfa Connection Details:
                
-        eq. command      :  python scriptName.py -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -sdt avro -cid mytopic-consumer 10 -secure -asyncapi
         Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv.
         Kafka Broker     :  %s
         Schema Registry  :  %s
@@ -239,7 +235,7 @@ if __name__ == '__main__':
         Client ID        :  %s
         Serializer Type  :  %s
         AsyncAPI Used    :  %s
-        Secure Cluster   :  %s """ %(kafkaBroker,schemaRegistryUrl,topic,clientID,serializer_deserializer_type,asyncapi,secure_cluster))
+        Secure Cluster   :  %s""" %(kafkaBroker,schemaRegistryUrl,topic,clientID,serializer_deserializer_type,asyncapi,secure_cluster))
 
         # Test HOW Access is sorted based on certificate CN
         if secure_cluster:
