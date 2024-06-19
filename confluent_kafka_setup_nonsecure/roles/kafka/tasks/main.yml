@@ -36,8 +36,8 @@
 - name: Check Kafka Status
   command: service confluent-server status
   register: kafka_status
-  args:
-    warn: no
+  #args:
+  #  warn: no
   ignore_errors: true
   changed_when: false
   failed_when: false # To void Failed Kafka Status on Console

@@ -3,7 +3,7 @@
 validate_hosts: true
 
 ### Version of Confluent Platform to install
-confluent_package_version: 6.2.0
+confluent_package_version: 7.2.5
 
 
 ################ Zookeeper Properties #############

@@ -21,28 +21,28 @@ kafka_servers:
   hosts:
     # with hosts.yml we cant use below
     #ansi-syst29-01.nrsh13-hadoop.com ansible_host=10.86.113.117
-    ansi-lab01-01.nrsh13-hadoop.com:
+    nrsh13-app-lab01-rhel-0:
       kafka_broker_id: 1
 
-    ansi-lab01-02.nrsh13-hadoop.com:
-       kafka_broker_id: 2
+    #ansi-lab01-02.nrsh13-hadoop.com:
+       #kafka_broker_id: 2
 
-    ansi-lab01-03.nrsh13-hadoop.com:
-       kafka_broker_id: 3
+    #ansi-lab01-03.nrsh13-hadoop.com:
+       #kafka_broker_id: 3
 
 zk_servers:
   hosts:
     #ansi-syst29-05.nrsh13-hadoop.com ansible_host=10.86.113.33
-    ansi-lab01-01.nrsh13-hadoop.com:
+    nrsh13-app-lab01-rhel-0:
       zk_id: 1
 
-    ansi-lab01-02.nrsh13-hadoop.com:
-      zk_id: 2
+    #ansi-lab01-02.nrsh13-hadoop.com:
+      #zk_id: 2
 
-    ansi-lab01-03.nrsh13-hadoop.com:
-      zk_id: 3
+    #ansi-lab01-03.nrsh13-hadoop.com:
+      #zk_id: 3
   
 other_servers:
   hosts:
-    ansi-lab01-01.nrsh13-hadoop.com:
+    nrsh13-app-lab01-rhel-0:
  

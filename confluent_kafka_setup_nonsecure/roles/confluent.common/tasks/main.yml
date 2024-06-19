@@ -39,8 +39,8 @@
 # Not using handler because of https://github.com/ansible/ansible/issues/41313
 - name: yum-clean-all
   command: yum clean all
-  args:
-    warn: false
+  #args:
+  #  warn: false
   when: confluent_dist_repo_result.changed|default(False) or confluent_repo_result.changed|default(False) or custom_repo_result.changed|default(False)
 
 - name: Install Java

@@ -27,7 +27,7 @@ kafka_broker_user: cp-kafka
 kafka_broker_group: confluent
 
 kafka_broker:
-  confluent_version: 6.2
+  confluent_version: 7.2
   kafka_application_path: /etc/kafka
   config_file: "/etc/kafka/server.properties"
   log4j_file: /etc/kafka/log4j.properties
