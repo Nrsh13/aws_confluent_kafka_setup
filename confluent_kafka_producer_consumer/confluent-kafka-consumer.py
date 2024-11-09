@@ -67,7 +67,7 @@ def dict_to_user(obj, ctx):
 # Get Schema for Value
 def get_schema(schemaRegistryUrl,topic):
         try:
-                subject = topic + '-value'
+                subject = topicSubjectInSR
                 url="{}/subjects/{}/versions".format(schemaRegistryUrl, subject)
                 headers = { 'Content-Type': 'application/vnd.schemaregistry.v1+json',}
                 cert = (ssl_certificate_location,ssl_key_location)  # Make sure Cert is mentioned before Key
@@ -167,14 +167,16 @@ if __name__ == '__main__':
         hostnames = socket.gethostname()
 
         print("\n")
-        parser = argparse.ArgumentParser(description="for eq.: python %s -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -sdt avro -cid mytopic-consumer -secure -asyncapi""" %(sys.argv[0]))
+        parser = argparse.ArgumentParser(description="for eq.: python %s -t mytopic -kb mykafkabroker01:9093 -sr https://myschemaregistry01:18081 -tssr mytopic-value -sdt avro -cid mytopic-consumer -secure -asyncapi""" %(sys.argv[0]))
         parser.add_argument('-t', dest="topic", default="mytopic",
                             help="Topic name - Brand new if serializer_deserializer_type is changed")
         parser.add_argument('-kb', dest="kafka_server", required=False, default=hostnames,
                             help="Kafka Broker with port - hostname:9092")
         parser.add_argument('-sr', dest="schema_registry", required=False, default=hostnames,
                             help="Schema Registry full URL - https://hostname:18081")
-        parser.add_argument('-sdt', dest="serializer_deserializer_type", required=True, default='none',
+        parser.add_argument('-tssr', dest="topic_subject_in_sr", required=False, default=None,
+                            help="Topic Subject in SR - mytopic-value")        
+        parser.add_argument('-sdt', dest="serializer_deserializer_type", required=True, default=None,
                             help="Serializer Deserializer Type - avro, json or none")  
         parser.add_argument('-cid', dest="clientID", default=None,
                             help="consumer only: Client ID having access to consume from topic.")          
@@ -195,6 +197,7 @@ if __name__ == '__main__':
         asyncapi = args.asyncapi_enabled
         serializer_deserializer_type = args.serializer_deserializer_type  
         clientID = getattr(args, 'clientID', None) or f"{topic}-consumer"
+        topicSubjectInSR = getattr(args, 'topic_subject_in_sr', None) or f"{topic}-value"
 
         if secure_cluster is None:
             secure_cluster = False
@@ -234,8 +237,9 @@ if __name__ == '__main__':
         Topic            :  %s
         Client ID        :  %s               
         Kafka Broker     :  %s
-        Schema Registry  :  %s               
-        Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv.""" %(serializer_deserializer_type,asyncapi,secure_cluster,topic,clientID,kafkaBroker,schemaRegistryUrl))
+        Schema Registry  :  %s  
+        TopicSubjectInSR :  %s             
+        Dependencies     :  python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema python-dotenv.""" %(serializer_deserializer_type,asyncapi,secure_cluster,topic,clientID,kafkaBroker,schemaRegistryUrl,topicSubjectInSR))
 
         # Test HOW Access is sorted based on certificate CN
         if secure_cluster:
