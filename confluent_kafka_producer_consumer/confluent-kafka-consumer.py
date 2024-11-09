@@ -175,7 +175,7 @@ if __name__ == '__main__':
         parser.add_argument('-sr', dest="schema_registry", required=False, default=hostnames,
                             help="Schema Registry full URL - https://hostname:18081")
         parser.add_argument('-tssr', dest="topic_subject_in_sr", required=False, default=None,
-                            help="Topic Subject in SR - mytopic-value")        
+                            help="Topic Subject in Schema Registry - mytopic-value")        
         parser.add_argument('-sdt', dest="serializer_deserializer_type", required=True, default=None,
                             help="Serializer Deserializer Type - avro, json or none")  
         parser.add_argument('-cid', dest="clientID", default=None,
