@@ -448,7 +448,7 @@ if __name__ == '__main__':
         hostnames = socket.gethostname()
 
         print("\n")
-        parser = argparse.ArgumentParser(description="for eq.: python %s -t mytopic -kb mykafkabroker01:9093 -sr myschemaregistry01:18081 -tssr mytopic-value -sdt avro -n 10 -secure -asyncapi""" %(sys.argv[0]))
+        parser = argparse.ArgumentParser(description="for eq.: python %s -t mytopic -kb mykafkabroker01:9093 -sr https://myschemaregistry01:18081 -tssr mytopic-value -sdt avro -n 10 -secure -asyncapi""" %(sys.argv[0]))
         parser.add_argument('-t', dest="topic", default="mytopic",
                             help="Topic name - Brand new if serializer_deserializer_type is changed")
         parser.add_argument('-kb', dest="kafka_server", required=False, default=hostnames,
