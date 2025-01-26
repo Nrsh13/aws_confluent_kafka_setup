@@ -1,5 +1,13 @@
 ##### Resources #####
 
+locals {
+  ec2_userdata =  templatefile("./userdata.sh", {
+    aws_region = "${var.aws_region}"
+    public_key = "${var.keypair_public_key}"
+    passwordless_ssh_user = "${var.passwordless_ssh_user}"
+  })
+}
+
 ## Attach pre-generated keypair to instance - ssh-keygen -C userName
 resource "aws_key_pair" "ec2-key" {
   key_name    = "${var.passwordless_ssh_user}"
@@ -17,7 +25,7 @@ resource "aws_instance" "my_ec2_instances" {
   subnet_id = element(sort(data.aws_subnets.subnet_ids.ids), "${count.index + 1}")
   vpc_security_group_ids = ["${aws_security_group.ec2_server_sg.id}"]
   key_name  = aws_key_pair.ec2-key.key_name
-  user_data = "${data.template_file.ec2_userdata.rendered}"
+  user_data = local.ec2_userdata
   #/dev/sda1
   root_block_device {
     volume_size           = 50

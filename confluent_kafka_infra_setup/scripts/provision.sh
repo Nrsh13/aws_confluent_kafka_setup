@@ -76,7 +76,7 @@ pushd $scripts_dir/../infra/terraform > /dev/null
 
 cp main.tf.s3 main.tf
 
-echo "\n\$------ Running Terraform init ------\$"
+echo "\n\$------ Running Terraform init ------\$\n"
 export TF_IN_AUTOMATION=true # To Remove init output last parahgraph
 terraform init ${common_var_file} ${instance_var_file} -backend-config="region=$aws_region" -backend-config="bucket=${terraform_state_bucket}" -backend-config="key=terraform.tfstate" -input=true | egrep -v '^- module|^- Reusing|^- Using|^- Finding|^- Install|^Terraform' 
 

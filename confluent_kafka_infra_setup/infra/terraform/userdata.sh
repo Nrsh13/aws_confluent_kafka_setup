@@ -47,4 +47,5 @@ chmod +x /usr/bin/confluent
 # For UI and Kafka setup
 service iptables stop
 chmod 777 /var/lib
+python3.9 -m pip install confluent-kafka --only-binary :all:
 python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema
