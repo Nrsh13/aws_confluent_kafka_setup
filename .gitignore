@@ -7,6 +7,7 @@
 **/*.tfstate.*/*
 **/scripts/ansible*
 **/scripts/etchosts*
+**/scripts/ssh_setup_done.flag
 **/infra/terraform/errored.tfstate
 
 # Crash log files
