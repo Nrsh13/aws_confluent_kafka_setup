@@ -8,6 +8,7 @@ sshUser=$5
 
 ## here we will prepare /etc/hosts files which will include all 3 kafka ec2s + active directory ec2. Then we will copy this to each host so that all are reachable to each other.
 
+echo "\n --- ALERT: Public IP of the Machines will KEEP on changing after reboot. DONT Forget to update it wherever required ----"
 echo "\ninfo: Prepare /etc/hosts for Corporate (Ec2s in Private Subnet) - Uses EC2s Private IP\n"
 rm -f ../../scripts/etchosts*	  
 

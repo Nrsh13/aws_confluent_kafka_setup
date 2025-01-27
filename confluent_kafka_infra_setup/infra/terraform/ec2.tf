@@ -55,24 +55,34 @@ resource "aws_instance" "my_ec2_instances" {
   }
 }
 
-# # To set up ssh to all Ec2s from Local
-# resource "null_resource" "ansible" {
-#   depends_on = [
-#     aws_instance.my_ec2_instances
-#   ]
 
-#   triggers = {
-#     key = "${uuid()}"
-#   }
+resource "null_resource" "ansible" {
+  depends_on = [
+    aws_instance.my_ec2_instances
+  ]
 
-#   provisioner "local-exec" {
-#     #  interpreter = ["PowerShell", "-Command"]
-#     interpreter = [
-#       "bash" , "-c"
-#     ]
-#     command = <<-EOT
-#       sh ../../scripts/post-setup-etc-hosts.sh ${var.component} ${var.environment}  ${var.instance_count} ${var.hostname_domain} ${var.passwordless_ssh_user}
-#     EOT
-#   }
+  triggers = {
+    # Trigger the resource if the flag file does not exist or if it's not present
+    setup_done = fileexists("../../scripts/ssh_setup_done.flag") ? "true" : "false"
+  }
 
-# }
+  provisioner "local-exec" {
+    interpreter = [
+      "bash", "-c"
+    ]
+    command = <<-EOT
+      # Check if the flag file does not exist, meaning the setup is not done
+      if [ ! -f "../../scripts/ssh_setup_done.flag" ]; then
+        echo "INFO: Running SSH setup for the first time"
+        
+        # Run the setup script
+        sh ../../scripts/post-setup-etc-hosts.sh ${var.component} ${var.environment} ${var.instance_count} ${var.hostname_domain} ${var.passwordless_ssh_user}
+        
+        # Create the flag file to mark the setup as done
+        touch ../../scripts/ssh_setup_done.flag
+      else
+        echo "INFO: SSH setup has already been done, skipping."
+      fi
+    EOT
+  }
+}
