@@ -55,40 +55,24 @@ resource "aws_instance" "my_ec2_instances" {
   }
 }
 
-# To set up ssh to all Ec2s from Local
-resource "null_resource" "ansible" {
-  depends_on = [
-    aws_instance.my_ec2_instances
-  ]
+# # To set up ssh to all Ec2s from Local
+# resource "null_resource" "ansible" {
+#   depends_on = [
+#     aws_instance.my_ec2_instances
+#   ]
 
-  triggers = {
-    key = "${uuid()}"
-  }
+#   triggers = {
+#     key = "${uuid()}"
+#   }
 
-  provisioner "local-exec" {
-    #  interpreter = ["PowerShell", "-Command"]
-    interpreter = [
-      "bash" , "-c"
-    ]
-    command = <<-EOT
-      sh ../../scripts/post-setup.sh ${var.component} ${var.environment}  ${var.instance_count} ${var.hostname_domain} ${var.passwordless_ssh_user}
-    EOT
-  }
+#   provisioner "local-exec" {
+#     #  interpreter = ["PowerShell", "-Command"]
+#     interpreter = [
+#       "bash" , "-c"
+#     ]
+#     command = <<-EOT
+#       sh ../../scripts/post-setup-etc-hosts.sh ${var.component} ${var.environment}  ${var.instance_count} ${var.hostname_domain} ${var.passwordless_ssh_user}
+#     EOT
+#   }
 
-}
-
-###### Output ######
-output "ETC_HOSTS_DETAILS" {
-  description = "Details for /etc/hosts"
-  value = "Refer scripts/etchostsBastion and scripts/etchostsWindows file for update(if needed) /etc/hosts or /c/Windows/System32/drivers/etc/hosts."
-}
-
-output "Private_IP" {
-  description = "List of private IP addresses assigned to the instances"
-  value = aws_instance.my_ec2_instances.*.private_ip
-}
-
-output "Public_IP" {
-  description = "List of Public IP addresses assigned to the instances"
-  value = aws_instance.my_ec2_instances.*.public_ip
-}
+# }

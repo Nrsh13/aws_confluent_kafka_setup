@@ -103,3 +103,20 @@ variable "passwordless_ssh_user" {
   description = "User for Password less SSH for Ansible."
   type = string
 }
+
+# ALB
+# https_enabled_ui needs Certificate in AWS ACM. Get acm_cert_domain_name (under AWS -> ACM -> List Certificates -> Domain Name of your cert. acm_cert_domain_name is generally same as Common Name of the cert.
+# Below 3 are important variables when using in corporate or personal environment
+variable "https_enabled_ui" { 
+  type = bool 
+  default = true
+} # true or false
+variable "load_balancer_is_internal" {
+  default = "false"
+} # Important for UI Access else LB throws - This site can’t be reached
+variable "route53_hosted_zone_private" {
+  default = "false"
+}
+variable "acm_cert_domain_name" {}
+variable "route53_hosted_zone" {}
+variable "route53_hosted_zone_dns" {}

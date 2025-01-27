@@ -1,6 +1,14 @@
 #!/bin/bash
 # yum update -y
-yum install -y python39 dos2unix ansible conntrack socat postgresql mariadb wget curl git jq unzip java-1.8.0-openjdk openldap* vim nc bind-utils net-tools
+yum install -y python3.12 dos2unix ansible conntrack socat postgresql mariadb wget curl git jq unzip java-1.8.0-openjdk openldap* vim nc bind-utils net-tools
+
+# setting up Python and pip
+rm -f /usr/bin/python
+ln -s /usr/bin/python3.12 /usr/bin/python
+curl -s https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python get-pip.py
+python -m pip --version
+
 
 ########### Passing Less SSH Access #########
 useradd ${passwordless_ssh_user}
@@ -21,11 +29,11 @@ chmod 440 /etc/sudoers
 
 ########## aws, kubectl CLI installation 
 # AWS CLI 2
-python3.9 -m pip uninstall -y awscli
+python3.12 -m pip uninstall -y awscli
 rm -rf /opt/anaconda/bin/aws
 
 curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
+unzip -q awscliv2.zip
 ./aws/install   # will install at /usr/local/bin/aws (soft link)
 # Change permissions to main folder to allow non-root users to access awscli.
 chmod 755 -R /usr/local/aws-cli
@@ -47,5 +55,5 @@ chmod +x /usr/bin/confluent
 # For UI and Kafka setup
 service iptables stop
 chmod 777 /var/lib
-python3.9 -m pip install confluent-kafka --only-binary :all:
-python3.9 -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema
+python -m pip install confluent-kafka --only-binary :all:
+python -m pip install confluent-kafka confluent-kafka[avro] requests dateutils fastavro jsonschema

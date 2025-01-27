@@ -1,1 +1,296 @@
-Copy Content From dummyInventory.yml and update details
+# https://docs.confluent.io/ansible/current/ansible-configure.html#
+# https://github.com/confluentinc/cp-ansible/blob/7.3.4-post/docs/hosts_example.yml
+
+# Defining variables in Inventory file
+all:
+  vars:
+    ansible_connection: ssh
+    ansible_user: ansible
+    ansible_become: true
+    ansible_python_version: 3.12
+    #ansible_ssh_private_key_file: /tmp/certs/ssh_priv.pem
+
+    #### Setting Proxy Environment variables ####
+    ## To set proxy env vars for the duration of playbook run, uncomment below block and set as necessary
+    # proxy_env:
+    #   http_proxy: http://myproxy:1024
+    #   https_proxy: http://myproxy:1024
+    #   ## Note: You must use Hostnames or IPs to define your no_proxy server addresses, CIDR ranges are not supported.
+    #   no_proxy: .nrsh13-hadoop.com,.nrsh13-hadoop.com
+
+    ## Get the latest download link from https://www.confluent.io/hub/confluentinc/kafka-connect-s3
+    # kafka_connect_plugins_remote:
+    #   - https://d1i4a15mxbxib1.cloudfront.net/api/plugins/confluentinc/kafka-connect-s3/versions/10.4.2/confluentinc-kafka-connect-s3-10.4.2.zip
+
+    # SSL Ports setup
+    schema_registry_listener_port: 18081
+    kafka_connect_rest_port: 18083
+    kafka_connect_replicator_port: 18083
+
+    ############ Encryption SSL/TLS Setup Starts #############
+
+    # https://docs.confluent.io/ansible/current/ansible-encrypt.html
+    ssl_enabled: true
+    self_signed: false
+    ssl_custom_certs: true
+    ssl_custom_certs_remote_src: false 
+    # Ignore below when using variables from roles/secrets/default/secret.yml
+    #ssl_ca_cert_filepath: "/var/ssl/private/root/root.crt"    
+    #ssl_signed_cert_filepath: "/var/ssl/private/{{inventory_hostname}}/certificate.crt"
+    #ssl_key_filepath: "/var/ssl/private/{{inventory_hostname}}/private.key"
+
+    ## By default, the playbook will recreate them keystores and truststores on each run
+    ## To prevent this, uncomment this line:
+    regenerate_keystore_and_truststore: true
+    
+    ############ Encryption SSL/TLS Setup Ends #############
+
+
+    ############ Authentication Setup Starts #############
+
+    ## Kafka Broker Authentication
+    #SCRAM - https://docs.confluent.io/ansible/current/ansible-authenticate.html#configure-sasl-scram-sha-512-authentication
+    #mTLS - https://docs.confluent.io/ansible/current/ansible-authenticate.html#configure-mtls-authentication
+
+    # SCRAM
+    sasl_protocol: scram
+    sasl_scram_users:  #Will be created by default as well. But here we want to choose the PASSWORD.
+      admin:
+        principal: broker
+        password: my-secret	
+
+    #mTLS - SSL/TLS setup is pre-requisite
+    ssl_mutual_auth_enabled: false
+
+    ## Zookeeper Authentication - Zk to ZK authentication and ZK to Clients(kafka) authentication
+    zookeeper_sasl_protocol: digest
+    zookeeper_ssl_enabled: false
+    zookeeper_ssl_mutual_auth_enabled: false
+
+    ## Components authentication => NOT Using below while using MDS (LDAP User for each component authentication to Brokers - nrsh13 is used)
+    #kafka_broker_rest_proxy_authentication_type: mtls
+    #schema_registry_authentication_type: mtls
+    #kafka_connect_authentication_type: mtls
+    #kafka_rest_authentication_type: mtls
+    #ksql_authentication_type: mtls
+    #control_center_authentication_type: mtls
+    #
+    ############ Authentication Setup Ends #############
+
+
+    ############ Authorization RBAC = Needs MDS = Needs LDAP #############
+    # For RBAC which needs MDS - https://docs.confluent.io/ansible/current/ansible-authorize.html
+    # https://docs.confluent.io/ansible/current/ansible-authorize.html#
+
+    # Provide the super user credentials for bootstrapping RBAC within Confluent Platform
+    rbac_enabled: true
+
+    # Provide the super user credentials for bootstrapping RBAC within Confluent Platform
+    mds_super_user: "768019"
+    #mds_super_user_password: "myPassword@25"
+
+    # Components Authorization
+    kafka_broker_ldap_user: "768019"
+    #kafka_broker_ldap_password: "myPassword@25"
+    schema_registry_ldap_user: "768019"
+    #schema_registry_ldap_password: "myPassword@25"
+    kafka_connect_ldap_user: "768019"
+    #kafka_connect_ldap_password: "myPassword@25"
+    ksql_ldap_user: "768019"
+    #ksql_ldap_password: "myPassword@25"
+    kafka_rest_ldap_user: "768019"
+    #kafka_rest_ldap_password: "myPassword@25"
+    control_center_ldap_user: "768019"
+    #control_center_ldap_password: "myPassword@25"
+
+    # Provide your own MDS server certificates and key pair for OAuth
+    create_mds_certs: false
+    # Ignore below 2 locations when using variables from roles/secrets
+    #token_services_public_pem_file: /var/ssl/private/public.pem # Path to public.pem
+    #token_services_private_pem_file: /var/ssl/private/tokenKeypair.pem # Path to tokenKeypair.pem
+    mds_acls_enabled: false #to turn off mds based acls, they are on by default if rbac is on
+    mds_ssl_mutual_auth_enabled: true #Enable mutual authentication for RBAC to work with TLS
+
+    # Configure additional principals as RBAC super users - Should be AD User only
+    # rbac_component_additional_system_admins:
+    #   - 768019
+
+    #### Configuring Multiple Listeners ####
+    ## CP-Ansible will configure two listeners on the broker: an internal listener for the broker to communicate and an external for the components and other clients.
+    ## If you only need one listener uncomment this line:
+    # kafka_broker_configure_additional_brokers: false
+    ## By default both of these listeners will follow whatever you set for ssl_enabled and sasl_protocol.
+    ## To configure different security settings on the internal and external listeners set the following variables:
+
+    # Configure Listeners
+    kafka_broker_custom_listeners:
+      # For Inter Broker Communication
+      broker:
+        name: BROKER
+        port: 9092
+        ssl_enabled: true # Server Presents its certificate
+        ssl_mutual_auth_enabled: false #Mutual Auth - mTLS - Server and Client both presents their certs to each other.
+        sasl_protocol: scram
+      # For Components connectivity with Brokers
+      internal:
+        name: INTERNAL
+        port: 9091
+        ssl_enabled: true
+        ssl_mutual_auth_enabled: false
+        sasl_protocol: OAUTH # With scram - failed authentication due to: Client SASL mechanism 'SCRAM-SHA-512' not enabled in the server, enabled mechanisms are [OAUTHBEARER]
+      # For Clients
+      client_listener_ssl:
+        name: CLIENT-SSL
+        port: 9093
+        ssl_enabled: true
+        ssl_mutual_auth_enabled: true
+        sasl_protocol: none
+
+    ############ Authorization RBAC Ends #############
+
+
+    ############ Other Configuration Starts #############
+
+    #### Monitoring Configuration ####
+    ## Jolokia is enabled by default. The Jolokia jar gets pulled from the internet and enabled on all the components
+    ## If you plan to use the upgrade playbooks, it is recommended to leave jolokia enabled because kafka broker health checks depend on jolokias metrics
+    ## To disable, uncomment this line:
+    telemetry_enabled: false
+    #jolokia_enabled: true
+    ## During setup, the hosts will download the jolokia agent jar from Maven. To update that jar download set this var
+    #jolokia_jar_url: https://location.aws.nrsh13-hadoop.com/repository/confluent-kafka/Jolokia/jolokia-jvm-1.6.2-agent.jar
+    ## JMX Exporter is disabled by default. When enabled, JMX Exporter jar will be pulled from the Internet and enabled on the broker and zookeeper *only*.
+    ## To enable, uncomment this line:
+    #jmxexporter_enabled: true
+    ## To update that jar download set this var
+    #jmxexporter_jar_url: https://location.aws.nrsh13-hadoop.com/repository/confluent-kafka/prometheus/jmx_prometheus_javaagent-0.12.0.jar
+
+
+    #### Confluent Server vs Confluent Kafka ####
+    ## Confluent Server will be installed by default, to install confluent-kafka instead, uncomment the below
+    confluent_server_enabled: true
+    secrets_protection_enabled: false
+    #### Schema Validation ####
+    ## Schema Validation with the kafka configuration is disabled by default. To enable uncomment this line:
+    ## Schema Validation only works with confluent_server_enabled: true
+    kafka_broker_schema_validation_enabled: true
+
+    #### Fips Security ####
+    ## To enable Fips for added security, uncomment the below line.
+    ## Fips only works with ssl_enabled: true and confluent_server_enabled: true
+    # fips_enabled: true
+
+    #### set_permissions task ####
+    user_need_access_to_mytopic: "kafka-lab01.nrsh13-hadoop.com" # For mTLS Authentication - Take it from commonName field in generate_self_signed_certificates.sh
+
+    ## By default the Confluent CLI will be installed on each host *when rbac is enabled*, to stop this download set:
+    # For confluent CLI -> ~/.confluent/config.json => { "disable_feature_flags": true } => is required if Internet is NOT available. We are setting this using scripts_and_others/setup-initial-permissions.sh    
+    confluent_cli_download_enabled: true
+    confluent_cli_version: 3.10.0
+    ## CLI will be downloaded from Confluent's webservers, to customize the location of the binary set:
+    # confluent_cli_custom_download_url: <URL to custom webserver hosting for confluent cli>
+        
+    ############ Other Configuration Ends #############
+
+
+zookeeper:
+  hosts:
+    ansi-lab01-01.nrsh13-hadoop.com:
+      zookeeper_id: 1
+    ansi-lab01-02.nrsh13-hadoop.com:
+      zookeeper_id: 2
+    ansi-lab01-03.nrsh13-hadoop.com:
+      zookeeper_id: 3
+
+
+kafka_broker:
+  # LDAP Config passing from roles/secrets/defaults/secret.yml. Uncomment below when NOT using roles/secrets
+  #vars:
+    #kafka_broker_custom_properties:
+    #  ldap.group.member.attribute.pattern: "(?i)CN=(.*?),.*"
+    #  ldap.group.search.base: OU=Application Access,OU=Groups,OU=XYZ,DC=XYZ,DC=XYZ,DC=XYZ,DC=com
+    #  ldap.group.object.class: group
+    #  ldap.group.name.attribute: cn
+    #  ldap.group.member.attribute: member
+    #  ldap.java.naming.provider.url: ldaps://myldapserver.aws.nrsh13-hadoop.com:636
+    #  ldap.java.naming.security.authentication: simple
+    #  ldap.java.naming.security.principal: CN=nrsh13,OU=Service Accounts,OU=XYZ,DC=XYZ,DC=XYZ,DC=XYZ,DC=com
+    #  ldap.java.naming.security.credentials: "myPassword"
+    #  ldap.search.mode: USERS
+    #  ldap.user.memberof.attribute: memberOf
+    #  ldap.user.memberof.attribute.pattern: "(?i)CN=(.*?),.*"
+    #  ldap.user.name.attribute: sAMAccountName
+    #  ldap.user.object.class: user
+    #  ldap.user.search.base: OU=XYZ,DC=XYZ,DC=XYZ,DC=XYZ,DC=com
+    #  ldap.user.search.scope: 2
+    #  ldap.user.search.filter: (|(memberof=CN=A_Admin,OU=Application Access,OU=Groups,OU=XYZ,DC=XYZ,DC=XYZ,DC=XYZ,DC=com)(memberof=CN=A_Kafka_Users_Dev,OU=Application Access,OU=Groups,OU=XYZ,DC=XYZ,DC=XYZ,DC=XYZ,DC=com))
+
+  hosts:
+    ansi-lab01-01.nrsh13-hadoop.com:
+      broker_id: 1
+      kafka_broker_custom_properties:
+        ssl.principal.mapping.rules: "RULE:^CN=(.*?),.*$/$1/,DEFAULT"
+    ansi-lab01-02.nrsh13-hadoop.com:
+      broker_id: 2
+      kafka_broker_custom_properties:
+        ssl.principal.mapping.rules: "RULE:^CN=(.*?),.*$/$1/,DEFAULT"
+    ansi-lab01-03.nrsh13-hadoop.com:
+      broker_id: 3
+      kafka_broker_custom_properties:
+        ssl.principal.mapping.rules: "RULE:^CN=(.*?),.*$/$1/,DEFAULT"
+
+schema_registry:
+  vars:
+    # Producer/Consumer does not need to authenticate. without below, SR will ask for user creds along with certs. Else it causes 'Unauthorized Error'
+    # [root@ansi-lab01-01 ~]# curl https://ansi-lab01-01.nrsh13-hadoop.com:18081 --cert /var/ssl/private/kafka_broker.crt --key /var/ssl/private/kafka_broker.key
+    # {"error_code":401,"message":"Unauthorized"}    
+    schema_registry_custom_properties:
+      authentication.skip.paths: /*
+      confluent.schema.registry.anonymous.principal: true
+  hosts:
+    ansi-lab01-01.nrsh13-hadoop.com:
+      schema_compatibilty: FORWARD_TRANSITIVE
+    ansi-lab01-02.nrsh13-hadoop.com:
+      schema_compatibilty: FORWARD_TRANSITIVE
+
+kafka_connect:
+  vars:
+    kafka_connect_group_id: kafka-connect-lab01
+  hosts:
+    ansi-lab01-01.nrsh13-hadoop.com:
+    ansi-lab01-02.nrsh13-hadoop.com:
+
+control_center:
+  vars:
+     # For additional Configuration
+     control_center_custom_properties:
+      confluent.controlcenter.name: "CCC-Lab-AWS"
+      confluent.controlcenter.topic.inspection.enable: "false"
+      confluent.controlcenter.ui.autoupdate.enable: false
+      confluent.controlcenter.mail.enabled: true
+      confluent.controlcenter.mail.host.name: localhost.nrsh13-hadoop.com
+      confluent.controlcenter.mail.port: 25
+      confluent.controlcenter.mail.from: "nrsh13@gmail.com"
+  hosts:
+    ansi-lab01-01.nrsh13-hadoop.com:
+     # For CCC Active/Active Setup
+     control_center_custom_properties:
+      confluent.controlcenter.id: "1"
+      confluent.controlcenter.data.dir: "/var/lib/confluent/control-center"
+    ansi-lab01-02.nrsh13-hadoop.com:
+     control_center_custom_properties:
+      confluent.controlcenter.id: "2"
+      confluent.controlcenter.data.dir: "/var/lib/confluent/control-center02"
+
+kafka_rest:
+  hosts:
+    ansi-lab01-01.nrsh13-hadoop.com:
+
+ksql:
+  hosts:
+    ansi-lab01-01.nrsh13-hadoop.com:
+
+# Any of the Broker Host, Used to run confluent cli commands to set required permissions.
+set_permissions:
+  hosts:
+    ansi-lab01-01.nrsh13-hadoop.com:

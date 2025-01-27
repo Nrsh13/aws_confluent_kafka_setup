@@ -17,6 +17,14 @@
     - validate
     - validate_ansi_version
 
+- name: Check the presence of Controller and Zookeeper
+  fail:
+    msg:  "Providing Zookeeper and Controller both are not supported at this time. Please remove one of these from your inventory"
+  when:
+    - ('kafka_controller' in groups.keys() and groups['kafka_controller'] | length > 0) | bool
+    - ('zookeeper' in groups.keys() and groups['zookeeper'] | length > 0) | bool
+    - not kraft_migration | bool
+
 - name: Gather OS Facts
   setup:
     gather_subset:
@@ -50,12 +58,6 @@
   include_tasks: debian.yml
   when: ansible_distribution == "Debian"
 
-- name: Config Validations
-  include_tasks: config_validations.yml
-  when: validate_hosts|bool
-  tags:
-    - validate
-
 # Process Archive File deployments
 - name: Create Confluent Platform install directory
   file:
@@ -63,7 +65,7 @@
     group: "{{ omit if archive_group == '' else archive_group }}"
     owner: "{{ omit if archive_owner == '' else archive_owner }}"
     state: directory
-    mode: 0755
+    mode: '755'
   when: installation_method == "archive"
 
 # If the target directory (i.e. creates) doesn't exist then download and expand the remote archive into target
@@ -74,53 +76,66 @@
     dest: "{{archive_destination_path}}"
     group: "{{ omit if archive_group == '' else archive_group }}"
     owner: "{{ omit if archive_owner == '' else archive_owner }}"
-    mode: 0755
+    mode: '755'
     creates: "{{binary_base_path}}"
+  when: installation_method == "archive"
+
+- name: Set Group and Owner for Confluent Platform archive
+  file:
+    path: "{{archive_destination_path}}"
+    group: "{{ omit if archive_group == '' else archive_group }}"
+    owner: "{{ omit if archive_owner == '' else archive_owner }}"
+    mode: '755'
+    recurse: true
   when: installation_method == "archive"
 
 - name: Create Jolokia directory
   file:
     path: "{{ jolokia_jar_path | dirname }}"
     state: directory
-    mode: 0755
-  when: jolokia_enabled|bool
+    mode: '755'
+  when:
+    - lookup('vars', item + '_jolokia_enabled', default=jolokia_enabled)|bool
+  loop: "{{ group_names }}"
 
 - name: Copy Jolokia Jar
   copy:
     src: "{{ jolokia_jar_url }}"
     dest: "{{ jolokia_jar_path }}"
-    mode: 0755
+    mode: '755'
   when:
-    - jolokia_enabled|bool
+    - lookup('vars', item + '_jolokia_enabled', default=jolokia_enabled)|bool
     - not jolokia_url_remote|bool
+  loop: "{{ group_names }}"
 
 - name: Download Jolokia Jar
   get_url:
     url: "{{ jolokia_jar_url }}"
     dest: "{{ jolokia_jar_path }}"
     force: "{{ jolokia_jar_url_force }}"
-    mode: 0755
+    mode: '755'
   register: jolokia_download_result
   until: jolokia_download_result is success
   retries: 5
   delay: 5
   when:
-    - jolokia_enabled|bool
+    - lookup('vars', item + '_jolokia_enabled', default=jolokia_enabled)|bool
     - jolokia_url_remote|bool
     - not ansible_check_mode # (Bug ansible/ansible#65687)
+  loop: "{{ group_names }}"
 
 - name: Create Prometheus install directory
   file:
     path: "{{ jmxexporter_jar_path | dirname }}"
     state: directory
-    mode: 0755
+    mode: '755'
   when: jmxexporter_enabled|bool
 
 - name: Copy Prometheus Jar
   copy:
     src: "{{ jmxexporter_jar_url }}"
     dest: "{{ jmxexporter_jar_path }}"
-    mode: 0755
+    mode: '755'
   when:
     - jmxexporter_enabled|bool
     - not jmxexporter_url_remote|bool
@@ -130,7 +145,7 @@
     url: "{{ jmxexporter_jar_url }}"
     dest: "{{ jmxexporter_jar_path }}"
     force: "{{ jmxexporter_jar_url_force }}"
-    mode: 0755
+    mode: '755'
   register: prometheus_download_result
   until: prometheus_download_result is success
   retries: 5

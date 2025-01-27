@@ -7,7 +7,7 @@
     - import_role:
         name: variables
     - name: Create Certificate Authority and Copy to Ansible Host
-      include_tasks: tasks/certificate_authority.yml
+      include_tasks: roles/common/tasks/certificate_authority.yml
       tags: certificate_authority
       run_once: true
       when: >
@@ -113,52 +113,52 @@
         name: control_center
 
 
-- name: KSQL Provisioning
-  hosts: ksql
-  gather_facts: false
-  tags: ksql
-  environment: "{{ proxy_env }}"
-  pre_tasks:
-    - name: include_secrets_role
-      include_vars: "roles/secrets/defaults/secret.yml"
-      tags: ["always"]
-  tasks:
-    - import_role:
-        name: variables
-    - import_role:
-        name: ksql
+# - name: KSQL Provisioning
+#   hosts: ksql
+#   gather_facts: false
+#   tags: ksql
+#   environment: "{{ proxy_env }}"
+#   pre_tasks:
+#     - name: include_secrets_role
+#       include_vars: "roles/secrets/defaults/secret.yml"
+#       tags: ["always"]
+#   tasks:
+#     - import_role:
+#         name: variables
+#     - import_role:
+#         name: ksql
 
 
-- name: Kafka Rest Provisioning
-  hosts: kafka_rest
-  gather_facts: false
-  tags: kafka_rest
-  environment: "{{ proxy_env }}"
-  pre_tasks:
-    - name: include_secrets_role
-      include_vars: "roles/secrets/defaults/secret.yml"
-      tags: ["always"]
-  tasks:
-    - import_role:
-        name: variables
-    - import_role:
-        name: kafka_rest
+# - name: Kafka Rest Provisioning
+#   hosts: kafka_rest
+#   gather_facts: false
+#   tags: kafka_rest
+#   environment: "{{ proxy_env }}"
+#   pre_tasks:
+#     - name: include_secrets_role
+#       include_vars: "roles/secrets/defaults/secret.yml"
+#       tags: ["always"]
+#   tasks:
+#     - import_role:
+#         name: variables
+#     - import_role:
+#         name: kafka_rest
 
 
-- name: Kafka Connect Replicator Provisioning
-  hosts: kafka_connect_replicator
-  gather_facts: false
-  tags: kafka_connect_replicator
-  environment: "{{ proxy_env }}"
-  pre_tasks:
-    - name: include_secrets_role
-      include_vars: "roles/secrets/defaults/secret.yml"
-      tags: ["always"]
-  tasks:
-    - import_role:
-        name: variables
-    - import_role:
-        name: kafka_connect_replicator
+# - name: Kafka Connect Replicator Provisioning
+#   hosts: kafka_connect_replicator
+#   gather_facts: false
+#   tags: kafka_connect_replicator
+#   environment: "{{ proxy_env }}"
+#   pre_tasks:
+#     - name: include_secrets_role
+#       include_vars: "roles/secrets/defaults/secret.yml"
+#       tags: ["always"]
+#   tasks:
+#     - import_role:
+#         name: variables
+#     - import_role:
+#         name: kafka_connect_replicator
 
 
 - name: Post setup Permissions

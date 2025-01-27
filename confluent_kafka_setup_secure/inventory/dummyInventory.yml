@@ -180,7 +180,7 @@ all:
     # fips_enabled: true
 
     #### set_permissions task ####
-    user_need_access_to_mytopic: "kafka-connect-lab01.aws.nrsh13-hadoop.com" # For mTLS Authentication
+    user_need_access_to_mytopic: "kafka-connect-lab01.aws.nrsh13-hadoop.com" # For mTLS Authentication - Take it from commonName field in generate_self_signed_certificates.sh
 
     ## By default the Confluent CLI will be installed on each host *when rbac is enabled*, to stop this download set:
     # For confluent CLI -> ~/.confluent/config.json => { "disable_feature_flags": true } => is required if Internet is NOT available. We are setting this using scripts_and_others/setup-initial-permissions.sh    

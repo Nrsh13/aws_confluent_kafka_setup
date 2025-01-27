@@ -42,7 +42,7 @@ done
 # 3.25.118.19	ansi-lab01-02.nrsh13-hadoop.com	ansi-lab01-02
 # 3.27.162.43	ansi-lab01-03.nrsh13-hadoop.com	ansi-lab01-03
 
-echo "\ninfo: Prepare /etc/hosts on macOS - assuming passwordless sudo for `whoami`"
+echo "\ninfo: Prepare /etc/hosts on macOS - assuming passwordless sudo for `whoami` - ONLY PUBLIC IP CAN BE USED FOR SSH"
 cp /etc/hosts ../../scripts/
 sed -i '' -e '/ansi/d' -e '/active-directory/d' -e '/^$/d' ../../scripts/hosts
 echo "" >> ../../scripts/hosts
@@ -50,12 +50,13 @@ cat ../../scripts/etchostsPublicIP >> ../../scripts/hosts
 sudo cp ../../scripts/hosts /etc/hosts
 rm -f ../../scripts/hosts
 
-echo "\ninfo: SCP the etchostsPublicIP to all EC2s"
+echo "\ninfo: SCP the etchostsPrivateIP to all EC2s - ONLY USE PRIVATE IP FOR NODES INTERNAL COMMUNICATION"
+# https://stackoverflow.com/questions/30940981/zookeeper-error-cannot-open-channel-to-x-at-election-address/30993130#30993130?newreg=08fbe3fd0a464f8ebaf41b598b19f2dc
 for i in $(seq 1 $3); do
     hostName=${1}-${2}-0${i}
     echo "\ninfo: Checking ${hostName}${4}\n"
-    scp -q -o "StrictHostKeyChecking=no" ../../scripts/etchostsPublicIP ${sshUser}@${hostName}${4}:/tmp/
-    ssh -q -o "StrictHostKeyChecking=no" ${sshUser}@${hostName}${4} "sudo hostnamectl set-hostname ${hostName}${4}; sudo cp /etc/hosts /tmp/hosts; sudo chmod 777 /tmp/hosts; sudo sed -i -e '/ansi/d' -e '/active-directory/d' -e '/^$/d' /tmp/hosts; sudo echo \"\" >> /tmp/hosts; sudo cat /tmp/etchostsPublicIP >> /tmp/hosts; sudo cp /tmp/hosts /etc/hosts; cat /etc/hosts"
+    scp -q -o "StrictHostKeyChecking=no" ../../scripts/etchostsPrivateIP ${sshUser}@${hostName}${4}:/tmp/
+    ssh -q -o "StrictHostKeyChecking=no" ${sshUser}@${hostName}${4} "sudo hostnamectl set-hostname ${hostName}${4}; sudo cp /etc/hosts /tmp/hosts; sudo chmod 777 /tmp/hosts; sudo sed -i -e '/ansi/d' -e '/active-directory/d' -e '/^$/d' /tmp/hosts; sudo echo \"\" >> /tmp/hosts; sudo cat /tmp/etchostsPrivateIP >> /tmp/hosts; sudo cp /tmp/hosts /etc/hosts; cat /etc/hosts"
 done
 
 rm -f ../../scripts/etchosts*
