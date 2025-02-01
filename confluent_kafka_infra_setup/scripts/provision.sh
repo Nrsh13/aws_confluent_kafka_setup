@@ -11,11 +11,16 @@ export TF_VAR_aws_account_id=428706479336
 
 SECONDS=0
 
-# Print the Usage
-usage="
-Usage:
-    sh $0 --environment dev01|test01 --action apply|plan|destroy
-"
+# Define color variables
+BOLD_RED='\033[1;31m'
+RESET='\033[0m'
+
+# Usage
+usage() {
+    echo "${BOLD_RED}Usage:${RESET}"
+    echo "${BOLD_RED}       $0 --environment dev01|test01 --action apply|plan|destroy${RESET}\n"
+    exit 1
+}
 
 while [ "X${1}" != "X" ]; do
     case $1 in
@@ -36,19 +41,11 @@ while [ "X${1}" != "X" ]; do
     shift
 done
 
-# Env Var validation
-if [[ -z ${ENVIRONMENT} ]]; then
-    echo "\nEnvironment is not set. E.q. dev01, test01"
-    echo "$usage"
-    exit 1
+# Validate ENVIRONMENT and ACTION
+if [[ -z "$ENVIRONMENT" || ! "$ACTION" =~ ^(apply|plan|destroy)$ ]]; then
+    echo "${BOLD_RED}\nerror: Invalid options or missing environment/action!!${RESET}\n"
+    usage
 fi
-
-if [ ${ACTION} != "apply" ] && [ ${ACTION} != "plan" ] && [ ${ACTION} != "destroy" ] ; then
-    echo "\nAction can only be - apply, plan or destroy."
-    echo "$usage"
-    exit 1
-fi
-
 
 THIS_SCRIPT_DIR="$( cd "$( dirname "S(BASH_SOURCE[0]")" && pwd)"
 scripts_dir=$(echo $PWD)
